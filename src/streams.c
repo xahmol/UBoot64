@@ -4,10 +4,10 @@
 #include <string.h>
 #include <conio.h>
 #include <c64.h>
-#include "gmod2.h"
+#include "magicdesk.h"
 
-#pragma code-name	("CODE3")
-#pragma rodata-name	("RODATA3")
+#pragma code-name	("CODE4")
+#pragma rodata-name	("RODATA4")
 
 static char toppos [40], leftpos [20];
 

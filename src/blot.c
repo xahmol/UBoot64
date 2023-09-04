@@ -7,7 +7,7 @@
 
 #include <c64.h>
 
-#include "gmod2.h"
+#include "magicdesk.h"
 
 #pragma code-name	("CODE3")
 #pragma rodata-name	("RODATA3")

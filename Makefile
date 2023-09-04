@@ -12,7 +12,7 @@
 # - wput command installed: sudo apt-get install wput
 
 SOURCESMAIN = src/main.c src/blot.c src/streams.c
-LIBMAIN = src/bankswitch.s src/gmod2.s
+LIBMAIN = src/bankswitch.s src/magicdesk.s
 README = README.pdf
 ZIP = UBoot64-v091-$(shell date "+%Y%m%d-%H%M").zip
 
@@ -25,7 +25,7 @@ DEPLOYS = $(MAIN)
 CC65_TARGET = c64
 CC = cl65
 CFLAGS  = -t $(CC65_TARGET) --create-dep $(<:.c=.d) -O -I include
-LDFLAGSMAIN = -C gmod2.cfg -t $(CC65_TARGET) -m $(MAIN).map
+LDFLAGSMAIN = -C magicdesk.cfg -t $(CC65_TARGET) -m $(MAIN).map
 
 ########################################
 

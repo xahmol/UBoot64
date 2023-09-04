@@ -35,7 +35,7 @@ HeaderB:
 @ver:
 	.byt	$01,$00
 @carttye:
-	.byt	$00,$3C
+	.byt	$00,$13
 @EXROM:
 	.byt	$00
 @GAME:
@@ -109,14 +109,52 @@ ChipB3:
 
 .segment	"STARTUP"
 	.word	startup		;Cold start
-	.word	$FEBC		;Warm start, default calls NMI exit.
+	.word	$FE5E		;Warm start, default calls NMI exit.
 	.byt	$C3,$C2,$CD,$38,$30 ;magic to identify cartridge
 
 startup:
-	jsr	$FF84		;Init. I/O
-	jsr	$FF87		;Init. RAM
-	jsr	$FF8A		;Restore vectors
-	jsr	$FF81		;Init. screen
+	sei									; Disable interrrupts
+	ldx #$FF				
+	txs
+	ldx #$05
+	sta $D016							; Turn on VIC for PAL / NTSC check
+	jsr $FDB3							; Init CIA
+	jsr	$FF84							; Prepare IRQ
+	
+	; Init memory
+	lda #$00
+    tay
+init_loop1:
+	; Wipe first 3 pages
+	sta $0002,Y
+    sta $0200,Y
+    sta $0300,Y
+    iny
+    bne init_loop1
+
+	; Set Start of Tape Buffer pointer
+    ldx #$3c
+    ldy #$03
+    stx $B2
+    sty $B3
+
+	; Set IO Start address and OS end of memory pointer
+    ldx #$00
+    ldy #$A0
+    stx $C1
+    stx $0283
+    sty $C2
+    sty $0284
+
+	; Set OS Start of memory and screen memory
+    lda #$08
+    sta $0282
+    lda #$04
+    sta $0288
+	
+	jsr $FD15							; Init I/O
+	jsr $FF5B							; Init video
+	cli									; Restore interrupts
 	
 ; Switch to second charset
 
