@@ -40,8 +40,10 @@ HeaderB:
 	.byt	$01
 @GAME:
 	.byt	$01
+#cartsubtype:
+	.byt	$01
 @reserved1:
-	.byt	$00,$00,$00,$00,$00,$00
+	.byt	$00,$00,$00,$00,$00
 @Name:	;You put the name of the cartridge here.
 	.byt 	"uboot64",$00,$00,$00,$00,$00,$00,$00,$00,$00
 	.byt    $00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00,$00
@@ -118,7 +120,7 @@ startup:
 	txs
 	ldx #$05
 	sta $D016							; Turn on VIC for PAL / NTSC check
-	jsr $FDB3							; Init CIA
+	jsr $FDA3							; Init I/O
 	jsr	$FF84							; Prepare IRQ
 	
 	; Init memory

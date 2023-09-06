@@ -128,9 +128,16 @@ void main() {
         bankout();
     }
 
+    cgetc();
+
     uii_change_dir("/usb*/");
 	printf("\nDir changed\nStatus: %s", uii_status);
+
+    cgetc();
+
 	readconfigfile(configfilename);
+
+    cgetc();
 
     // Set time from NTP server
     //time_main();
@@ -138,6 +145,8 @@ void main() {
     // Load slot config
     cputs("\n\n\rReading slot data.");
     std_read("dmbslt.cfg"); // Read config file
+
+    cgetc();
 
     // Init screen and menu
     //initScreen(DC_COLOR_BORDER, DC_COLOR_BG, DC_COLOR_TEXT);
@@ -203,6 +212,7 @@ void main() {
 //
     //exitScreen();
     //commandfrommenu("scnclr:new",0);    // Erase memory and clear screen on exit
+    cgetc();
     bankout();
 }
 
