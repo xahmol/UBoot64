@@ -1,6 +1,6 @@
 
-#ifndef MAGICDESK_H_
-#define MAGICDESK_H_
+#ifndef FC3_H_
+#define FC3_H_
 
 //Main routine table.  Define in your code as the locations of your main
 //parts, where each entry determines a module in your program.

@@ -2,6 +2,7 @@
     "files.associations": {
         "BLOT.C": "cpp",
         "streams.C": "cpp",
-        "MAIN.C": "cpp"
+        "MAIN.C": "cpp",
+        "ultimate_dos_lib.h": "c"
     }
 }

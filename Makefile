@@ -11,8 +11,8 @@
 # - ZIP packages installed: sudo apt-get install zip
 # - wput command installed: sudo apt-get install wput
 
-SOURCESMAIN = src/main.c src/blot.c src/streams.c
-LIBMAIN = src/bankswitch.s src/magicdesk.s
+SOURCESMAIN = src/main.c src/ops.c src/ultimate_common_lib.c src/ultimate_dos_lib.c src/ultimate_time_lib.c src/ultimate_network_lib.c
+LIBMAIN = src/bankswitch.s src/fc3.s
 README = README.pdf
 ZIP = UBoot64-v091-$(shell date "+%Y%m%d-%H%M").zip
 
@@ -25,7 +25,7 @@ DEPLOYS = $(MAIN)
 CC65_TARGET = c64
 CC = cl65
 CFLAGS  = -t $(CC65_TARGET) --create-dep $(<:.c=.d) -O -I include
-LDFLAGSMAIN = -C magicdesk.cfg -t $(CC65_TARGET) -m $(MAIN).map
+LDFLAGSMAIN = -C fc3.cfg -t $(CC65_TARGET) -m $(MAIN).map
 
 ########################################
 

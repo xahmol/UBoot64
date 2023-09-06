@@ -3,12 +3,12 @@
 ;
 
 	;.export		_exit
-        .export         __STARTUP__ : absolute = 1      ; Mark as startup
+    .export     __STARTUP__ : absolute = 1      ; Mark as startup
 	.import		initlib, donelib, callirq
-       	.import	       	zerobss
-	.import	     	callmain, pushax
-        .import         RESTOR, BSOUT, CLRCH
-	.import	       	__INTERRUPTOR_COUNT__
+    .import	    zerobss
+	.import	    callmain, pushax
+    .import     RESTOR, BSOUT, CLRCH
+	.import	    __INTERRUPTOR_COUNT__
 	.import		__RAM_START__, __RAM_SIZE__	; Linker generated
 
 	.import		_cgetc, _puts, _memcpy, _bankrun
@@ -19,7 +19,7 @@
 	.import		__DATA_LOAD__, __DATA_RUN__, __DATA_SIZE__
 	.import		__BANKACCESS_LOAD__, __BANKACCESS_RUN__, __BANKACCESS_SIZE__
 
-        .include        "zeropage.inc"
+    .include        "zeropage.inc"
 	.include     	"c64.inc"
 
 
@@ -35,9 +35,9 @@ HeaderB:
 @ver:
 	.byt	$01,$00
 @carttye:
-	.byt	$00,$13
+	.byt	$00,$03
 @EXROM:
-	.byt	$00
+	.byt	$01
 @GAME:
 	.byt	$01
 @reserved1:
@@ -51,7 +51,7 @@ ChipB0:
 @magic:
 	.byt	$43,$48,$49,$50 ;"CHIP"
 @size:
-	.byt	$00,$00,$20,$10	;Use for 8k carridge
+	.byt	$00,$00,$40,$10	;Use for 16k carridge
 @chiptype:	;ROM
 	.byt	$00,$00
 @bank:
@@ -59,14 +59,14 @@ ChipB0:
 @start:
 	.byt	$80,$00
 @size2:
-	.byt	$20,$00
+	.byt	$40,$00
 
 .segment	"CHIP1"
 ChipB1:
 @magic:
 	.byt	$43,$48,$49,$50 ;"CHIP"
 @size:
-	.byt	$00,$00,$20,$10	;Use for 8k carridge
+	.byt	$00,$00,$40,$10	;Use for 16k carridge
 @chiptype:	;ROM
 	.byt	$00,$00
 @bank:
@@ -74,14 +74,14 @@ ChipB1:
 @start:
 	.byt	$80,$00
 @size2:
-	.byt	$20,$00
+	.byt	$40,$00
 
 .segment	"CHIP2"
 ChipB2:
 @magic:
 	.byt	$43,$48,$49,$50 ;"CHIP"
 @size:
-	.byt	$00,$00,$20,$10	;Use for 8k carridge
+	.byt	$00,$00,$40,$10	;Use for 16k carridge
 @chiptype:	;ROM
 	.byt	$00,$00
 @bank:
@@ -89,14 +89,14 @@ ChipB2:
 @start:
 	.byt	$80,$00
 @size2:
-	.byt	$20,$00
+	.byt	$40,$00
 
 .segment	"CHIP3"
 ChipB3:
 @magic:
 	.byt	$43,$48,$49,$50 ;"CHIP"
 @size:
-	.byt	$00,$00,$20,$10	;Use for 8k carridge
+	.byt	$00,$00,$40,$10	;Use for 16k carridge
 @chiptype:	;ROM
 	.byt	$00,$00
 @bank:
@@ -104,7 +104,7 @@ ChipB3:
 @start:
 	.byt	$80,$00
 @size2:
-	.byt	$20,$00
+	.byt	$40,$00
 
 
 .segment	"STARTUP"
@@ -151,7 +151,7 @@ init_loop1:
     sta $0282
     lda #$04
     sta $0288
-	
+
 	jsr $FD15							; Init I/O
 	jsr $FF5B							; Init video
 	cli									; Restore interrupts
@@ -163,25 +163,8 @@ init_loop1:
 
 ; Clear the BSS data
 
-; If we have IRQ functions, chain our stub into the IRQ vector
-
-;        lda     #<__INTERRUPTOR_COUNT__
-;      	beq	NoIRQ1
-;      	lda	IRQVec
-;       	ldx	IRQVec+1
-;      	sta	IRQInd+1
-;      	stx	IRQInd+2
-;      	lda	#<IRQStub
-;      	ldx	#>IRQStub
-;      	sei
-;      	sta	IRQVec
-;      	stx	IRQVec+1
-;      	cli
-
 ; Call module constructors
 
-	
-NoIRQ1:
 	lda	#<__DATA_LOAD__
 	sta	ptr1
 	lda	#>__DATA_LOAD__
@@ -214,7 +197,6 @@ NoIRQ1:
 	sta	ptr3+1
 	jsr	copym
 
-
 	lda	#<__LOWCODE_LOAD__
 	sta	ptr1
 	lda	#>__LOWCODE_LOAD__
@@ -231,7 +213,6 @@ NoIRQ1:
 	sta	ptr3+1
 	jsr	copym
 
-
 	lda	#<__RODATA_LOAD__
 	sta	ptr1
 	lda	#>__RODATA_LOAD__
@@ -247,7 +228,6 @@ NoIRQ1:
 	lda	#>__RODATA_SIZE__
 	sta	ptr3+1
 	jsr	copym
-
 
 	lda	#<__BANKACCESS_LOAD__
 	sta	ptr1
@@ -304,9 +284,9 @@ copym:
 	ora	ptr3+1
 	bne	@lp
 	rts
-	
-;m:
-;	.byt	"Hello, world!\n",0
+
 .segment	"LOWCODE"
+.segment	"CODE3"
+.segment	"RODATA3"
 .segment	"CODE4"
 .segment	"RODATA4"

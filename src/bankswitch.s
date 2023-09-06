@@ -15,7 +15,7 @@
 
 .segment	"BANKACCESS"
 
-BANKREG		 = $DE00
+BANKREG		 = $DFFF
 KBDBUFFER	 = $0277 
 
 _bankout:
@@ -23,7 +23,7 @@ _bankout:
 	sei			; Stop interrupts
 
 	; Bank out cartridge
-	lda #$80	; Mask for clearing bit 8
+	lda #$70	; Bitmask to switch cartridge ROM out
     sta BANKREG	; Set banking register to bank out cart
 
 	; Clean CC65 environment
@@ -123,6 +123,8 @@ exec_next2:
     jmp $a478       ; jump into BASIC
 
 _bankrun:
+; Routine to jump to specified bank and routine address
+; Input is entry number in the code table
 	asl
 	asl
 	tax
@@ -131,6 +133,7 @@ _bankrun:
 	lda	_codetable+1,x
 	sta	ptr1+1
 	lda	_codetable+2,x
+	ora #$40
 	sta	BANKREG
 	lda	#$00
 	sta	sp
@@ -141,18 +144,17 @@ _bankrun:
 	jmp	(ptr1)
 
 execute_commands:
-    .byte $0d, $0d
-    .byte "load "
-    .byte '"','*','"'
-    .byte ",8,1"
-    .byte $0d, $0d, $0d, $0d, $0d
-    .byte "run"
-    .byte $0d, 0
+; Buffer for boot execute commands: 200 bytes, zero terminated
+	.byte $00
+	.res 199
 
 execute_keys:
-	.byte $0d, $0d, 0
+; Buffer for boot execute enter keys: 10 bytes, zero terminated
+	.byte $00
+	.res 9
 
 bootmsg:
+; Boot message
 	.byte $0d,"uboot64.",$0D,$00
 
 	
