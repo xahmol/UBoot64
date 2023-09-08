@@ -1355,6 +1355,10 @@ void main() {
 
         // Set time from NTP server
         time_main();
+    } else {
+        // Restore slots in memory returning from filebrowser
+        std_read("dmbslt.cfg",0);
+        //pickmenuslot();
     }
 
     // Init screen and menu
@@ -1374,32 +1378,11 @@ void main() {
         {
     //    case CH_F1:
     //        // Filebrowser
-    //        loadoverlay("11:dmb-fb");        // Load overlay of file browser routines
-    //        mainLoopBrowse();
-    //        loadoverlay("11:dmb-menu");      // Load overlay of main DMBoot menu routines
-    //        if (trace == 1)
-    //        {
-    //            pickmenuslot();
-    //        }
+    //        bankrun(1);  // Jump to bank of filebrowser and start entry point
     //        break;
     //    
-    //    case CH_F5:
-    //        // Go to C64 mode
-    //        commandfrommenu("go 64", 1);
-    //        break;
-//
-    //    case CH_F6:
-    //        // GEOS RAM boot
-    //        clrscr();
-    //        textcolor(DC_COLOR_TEXT);
-    //        loadoverlay("11:dmb-geos");      // Load GEOS assembly code
-    //        geosboot_main();
-    //        break;
-//
     //    case CH_F4:
-    //        loadoverlay("11:dmb-util");      // Load util routines
     //        config_main();
-    //        loadoverlay("11:dmb-menu");      // Load overlay of main DMBoot menu routines
     //        break;
 //
         case CH_F2:
