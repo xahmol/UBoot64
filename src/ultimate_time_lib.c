@@ -14,6 +14,9 @@ Patches and pull requests are welcome
 #include "ultimate_common_lib.h"
 #include "ultimate_time_lib.h"
 
+#pragma code-name	("BANKACCESS");
+#pragma rodata-name	("BANKACCESS");
+
 void uii_get_time(void) 
 {
 	unsigned char cmd[] = {0x00,DOS_CMD_GET_TIME};

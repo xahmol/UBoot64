@@ -44,6 +44,7 @@
 // THE PROGRAMS ARE DISTRIBUTED IN THE HOPE THAT THEY WILL BE USEFUL,
 // BUT WITHOUT ANY WARRANTY. USE THEM AT YOUR OWN RISK!
 
+//Includes
 #include <stdio.h>
 #include <string.h>
 #include <peekpoke.h>
@@ -54,103 +55,18 @@
 #include <ctype.h>
 #include <device.h>
 #include <c64.h>
+#include <time.h>
 #include "defines.h"
-#include "ops.h"
 #include "core.h"
+#include "u-time.h"
 #include "ultimate_common_lib.h"
 #include "ultimate_dos_lib.h"
 #include "ultimate_time_lib.h"
+#include "ultimate_network_lib.h"
 #include "fc3.h"
 
-const char *value2hex = "0123456789abcdef";
-const char *reg_types[] = { "SEQ","PRG","URS","REL","VRP" };
-const char *oth_types[] = { "DEL","CBM","DIR","LNK","OTH","HDR"};
-char bad_type[4];
-
-BYTE device = 8;
-char linebuffer[81];
-char linebuffer2[81];
-char DOSstatus[40];
-
-/// string descriptions of enum drive_e
-const char* drivetype[LAST_DRIVE_E] = {"", "Pi1541", "1540", "1541", "1551", "1570", "1571", "1581", "1001", "2031", "8040", "sd2iec", "cmd", "vice", "u64"};/// enum drive_e value for each device 0-19.
-BYTE devicetype[MAXDEVID+1];
-
-// Generic functions
-void errorexit()
-{
-  // Bank out on error after keypress
-  printf("\n\rPress key to exit to BASIC.");
-  cgetc();
-  bankout();
-}
-
-void mid(const char *src, size_t start, size_t length, char *dst, size_t dstlen)
-{       
-    // Function to provide MID$ equivalent
-
-    size_t len = min( dstlen - 1, length);
- 
-    strncpy(dst, src + start, len);
-    // zero terminate because strncpy() didn't ? 
-    if(len < length)
-        dst[dstlen-1] = 0;
-}
-
-void cspaces(unsigned char number)
-{
-    /* Function to print specified number of spaces, cursor set by conio.h functions */
-
-    unsigned char x;
-
-    for(x=0;x<number;x++) { cputc(32); }
-}
-
-char* pathconcat()
-{
-    // Function to concatinate the path strings
-
-    char concat[100] ="";
-    int x;
-
-    if ( devicetype[pathdevice] == VICE || devicetype[pathdevice] == U64)
-    {
-        strcat( concat, "cd:/");
-    }
-    else
-    {
-        strcat( concat, "cd//");
-    }
-    for (x=0 ; x < depth ; ++x)
-    {
-        strcat( concat, path[x] );
-        strcat( concat, "/");
-    }
-    return concat;
-}
-
-char getkey(BYTE mask)
-{
-    // Function to wait for key within input validation mask
-    // Mask values for input validation (adds up for combinations):
-    // 00000001 =   1 = Numeric
-    // 00000010 =   2 = Alpha lowercase
-    // 00000100 =   4 = Alpha uppercase
-    // 00001000 =   8 = Up and down
-    // 00010000 =  16 = Left and right
-    // 00100000 =  32 = Delete and insert
-    // 01000000 =  64 = Return
-    // 10000000 = 128 = Y and N
-
-    BYTE keychar;
-
-    do
-    {
-        keychar = cgetc();
-    } while ( !(mask&1 && keychar > 47 && keychar < 58) && !(mask&2 && keychar > 31 && keychar < 96) && !(mask&4 && keychar > 95 && keychar < 128) && !(mask&16 && (keychar == 29 || keychar == 157)) && !(mask&8 && (keychar == 17 || keychar == 145)) && !(mask&32 && (keychar == 20 || keychar == 148)) && !(mask&64 && keychar == 13) && !(mask&128 && (keychar == 78 || keychar == 89)) );
-    return keychar;    
-}
-
+#pragma code-name	("CODE2");
+#pragma rodata-name	("RODATA2");
 
 // Config file I/O functions
 void CheckStatus(char* message) {
@@ -421,29 +337,4 @@ void readconfigfile(char* filename)
   //printf("\nConverted UTC offset: %ld",secondsfromutc);
   //printf("\nNTP Hostname: %s",host);
   //cgetc();
-}
-
-void headertext(char* subtitle)
-{
-    // Draw header text
-    // Input: subtitle is text to draw on second line
-
-    revers(1);
-    textcolor(DMB_COLOR_HEADER1);
-    gotoxy(0,0);
-    cspaces(SCREENW);
-    gotoxy(0,0);  
-    cprintf("UBoot64: Boot Menu for Ultimate devices");
-    textcolor(DMB_COLOR_HEADER2);
-    gotoxy(0,1);
-    cspaces(SCREENW);
-    gotoxy(0,1);
-    cprintf("%s\n\n\r", subtitle);
-    if(SCREENW == 80)
-    {
-        uii_get_time();
-        cputsxy(80-strlen((const char*)uii_data),1,(const char*)uii_data);
-    }
-    revers(0);
-    textcolor(DC_COLOR_TEXT);
 }
