@@ -77,6 +77,14 @@ const char* drivetype[LAST_DRIVE_E] = {"", "Pi1541", "1540", "1541", "1551", "15
 BYTE devicetype[MAXDEVID+1];
 
 // Generic functions
+void errorexit()
+{
+  // Bank out on error after keypress
+  printf("\n\rPress key to exit to BASIC.");
+  cgetc();
+  bankout();
+}
+
 void mid(const char *src, size_t start, size_t length, char *dst, size_t dstlen)
 {       
     // Function to provide MID$ equivalent
@@ -152,32 +160,34 @@ void CheckStatus(char* message) {
         printf("\n\rI/O error in %s.\n\r",message);
         printf("\n\rStatus: %s\n\r",uii_status);
         uii_abort();
-        printf("\n\rPress key to exit.\n\r");
-        cgetc();
-        bankout();
+        errorexit();
     }
 }
 
-void std_write(char * filename)
+void std_write(char * filename,unsigned char verbose)
 {
     unsigned char x;
 
     // Delete old config file as I can not (yet) get overwrite to work
-	uii_delete_file(filename);
+	  uii_delete_file(filename);
 
     // Save slots via UCI, one slot at a time due to 512 byte limit
     uii_open_file(0x06,filename);
     
-    for(x=0; x<36; ++x)
+    for(x=0; x<18; ++x)
     {
-        uii_write_file((void*)(slotaddress_start + (x*sizeof(Slot))),sizeof(Slot));
-        CheckStatus("writing slots");
+      if(verbose) {
+        gotoxy(0,8);
+        cprintf("Writing slot %2d ",x+1);
+      }
+      uii_write_file((void*)(slotaddress_start + (x*sizeof(Slot))),sizeof(Slot));
+      CheckStatus("writing slots");
     }
 
     uii_close_file();
 }
 
-void std_read(char * filename)
+void std_read(char * filename,unsigned char verbose)
 {
     // Function to read config file
     // Input: file_name is the name of the config file
@@ -186,12 +196,12 @@ void std_read(char * filename)
 
     // Allocate slots memory
     if(slotaddress_start) { free((void*)slotaddress_start); }
-    slotaddress_start = (unsigned int) calloc(36,sizeof(Slot));
+    slotaddress_start = (unsigned int) calloc(18,sizeof(Slot));
 
     // Abort if insufficient memory
     if(!slotaddress_start) {
         printf("\n\rOut of memory.\n\r");
-        bankout();
+        errorexit();
     }
 
     uii_open_file(0x01,filename);
@@ -199,8 +209,12 @@ void std_read(char * filename)
     // Check if a file already exists, otherwise create new one
     if(strcmp((const char*)uii_status,"00,ok") != 0)
     {
-        for(x=0; x<36; ++x)
+        for(x=0; x<18; ++x)
         {
+            if(verbose) {
+              gotoxy(0,8);
+              cprintf("Creating slot %2d",x+1);
+            }
             strcpy(Slot.menu,"");
             strcpy(Slot.path,"");
             strcpy(Slot.file,"");
@@ -218,28 +232,32 @@ void std_read(char * filename)
             Slot.image_b_id = 0;
             memcpy((void*)(slotaddress_start + (x*sizeof(Slot))),&Slot,sizeof(Slot));
         }
-        std_write(filename);
+        std_write(filename,1);
+        uii_close_file();
         return;
     }
 
-    for(x=0; x<36; ++x)
+    uii_read_file(sizeof(Slot));
+    for(x=0; x<18; ++x)
     {
-        uii_read_file(sizeof(Slot));
-        uii_readdata();
-        uii_accept();
-        CheckStatus("reading slots");
-        memcpy((void*)(slotaddress_start + (x*sizeof(Slot))),&uii_data,sizeof(Slot));
+      if(verbose) {
+        gotoxy(0,8);
+        cprintf("Reading slot %2d",x+1);
+      }
+      uii_readdata();
+      uii_accept();
+      CheckStatus("reading slots");
+      memcpy((void*)(slotaddress_start + (x*sizeof(Slot))),&uii_data,sizeof(Slot));
     }
     
     uii_close_file();
 
     memcpy(&Slot,(void*)slotaddress_start,sizeof(Slot));
     if(Slot.cfgvs < CFGVERSION) {
-        printf("\n\rOld configuration file format.");
-        printf("\n\rRun upgrade tool first.");
-        printf("\n\rPress key to exit.\n\r");
-        cgetc();
-        bankout();
+      printf("\n\rOld configuration file format.");
+      printf("\n\rRun upgrade tool first.");
+      printf("\n\rPress key to exit.\n\r");
+      errorexit();
     }
 }
 
@@ -304,7 +322,7 @@ void writeconfigfile(char* filename)
   //printf("\nStatus: %s", uii_status);
 
 	uii_write_file(utilbuffer,328);
-    CheckStatus("writing config");
+  CheckStatus("writing config");
   // Uncomment for debbug
   //printf("\nStatus: %s", uii_status);
 
@@ -333,7 +351,7 @@ void readconfigfile(char* filename)
   }
 
 	uii_read_file(328);
-    CheckStatus("reading config");
+  CheckStatus("reading config");
   // Uncomment for debbug
   //printf("\nStatus: %s", uii_status);
 

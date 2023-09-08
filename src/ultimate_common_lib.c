@@ -14,6 +14,8 @@ Patches and pull requests are welcome
 #include <string.h>
 #include "ultimate_common_lib.h"
 
+#pragma code-name	("BANKACCESS");
+
 unsigned char *id_reg = (unsigned char *)ID_REG;
 unsigned char *cmddatareg = (unsigned char *)CMD_DATA_REG;
 unsigned char *controlreg = (unsigned char *)CONTROL_REG;
@@ -32,8 +34,6 @@ unsigned char uii_target = TARGET_DOS1;
 // Core functions
 unsigned char uii_detect(void)
 {
-	printf("\n\rUCI ID_REG value: %2X\n\r",*id_reg);
-	printf("UCI ID_REG address: %4X\n\r",id_reg);
 	// Detect present of UCI via ID_REG. Value should be $C9
 	if(*id_reg == 0xc9) {
 		// Reset UCI

@@ -31,16 +31,19 @@ HeaderB:
 	.byt	$43,$36,$34,$20, $43,$41,$52,$54
 	.byt	$52,$49,$44,$47, $45,$20,$20,$20
 @headelen:
+	; 40 bytes header length
 	.byt	$00,$00,$00,$40
 @ver:
 	.byt	$01,$00
 @carttye:
+	; Cartridge type 3 - Final Cartridge 3
 	.byt	$00,$03
 @EXROM:
 	.byt	$01
 @GAME:
 	.byt	$01
-#cartsubtype:
+@cartsubtype:
+	; $01 for FC3 subtype not using df00-df1f, needed to see the Ultimate Command Interface
 	.byt	$01
 @reserved1:
 	.byt	$00,$00,$00,$00,$00
@@ -158,15 +161,28 @@ init_loop1:
 	jsr $FF5B							; Init video
 	cli									; Restore interrupts
 	
+; Init screen
 ; Switch to second charset
-
 	lda	#14
 	jsr	BSOUT
 
-; Clear the BSS data
+; Set colors
+	lda #$00							; Load value for black
+	sta VIC_BG_COLOR0					; Store as background color
+	lda #$07							; Load value for yellow
+	sta CHARCOLOR						; Store as foreground color
 
+; Print start message
+	ldx #$00
+msg_loop1:       
+	lda startmessage,x
+    beq msg_next1
+    jsr BSOUT
+    inx
+    bne msg_loop1
+
+msg_next1:
 ; Call module constructors
-
 	lda	#<__DATA_LOAD__
 	sta	ptr1
 	lda	#>__DATA_LOAD__
@@ -252,12 +268,16 @@ init_loop1:
 	lda	#$80;>(__RAM_START__ + __RAM_SIZE__)
        	sta	sp+1   		; Set argument stack ptr
 
+; Set border to black
+	lda #$00							; Load value for black
+	sta VIC_BORDERCOLOR					; Store as background color
+
+; Clear the BSS data
 	jsr	zerobss
+; Buold C environment
 	jsr	initlib
 
-
 start2:
-
 	lda	#0
 	jmp	_bankrun
 
@@ -271,7 +291,7 @@ copym:
 @lp:
 	lda	(ptr1),y
 	sta	(ptr2),y
-	inc	$D020
+	inc	VIC_BORDERCOLOR 				; Border color flashing effect
 	inc	ptr1
 	bne	*+4
 	inc	ptr1+1
@@ -286,6 +306,10 @@ copym:
 	ora	ptr3+1
 	bne	@lp
 	rts
+
+startmessage:
+	.byt "Starting UBoot64.",$0D,$0D
+	.byt "Copying core to RAM.",$0D,$00
 
 .segment	"LOWCODE"
 .segment	"CODE3"

@@ -55,8 +55,10 @@
 #include <ctype.h>
 #include <device.h>
 #include <c64.h>
+#include <time.h>
 #include "defines.h"
 #include "ops.h"
+#include "u-time.h"
 //#include "screen.h"
 //#include "version.h"
 //#include "base.h"
@@ -65,6 +67,7 @@
 #include "ultimate_common_lib.h"
 #include "ultimate_dos_lib.h"
 #include "ultimate_time_lib.h"
+#include "ultimate_network_lib.h"
 #include "fc3.h"
 
 #pragma code-name	("CODE2");
@@ -89,14 +92,14 @@ BYTE runmountflag = 0;
 BYTE mountflag = 0;
 
 struct SlotStruct Slot;
-char newmenuname[36][21];
-unsigned int newmenuoldslot[36];
+char newmenuname[18][21];
+unsigned int newmenuoldslot[18];
 BYTE bootdevice;
 long secondsfromutc = 0; 
 unsigned char timeonflag = 1;
 char host[80] = "pool.ntp.org";
 char imagename[20] = "default.reu";
-char reufilepath[60] = "/usb*/11/";
+char reufilepath[60] = "/usb*/";
 char imageaname[20] = "";
 char imageapath[60] = "";
 unsigned char imageaid = 0;
@@ -106,17 +109,131 @@ unsigned char imagebid = 0;
 unsigned char reusize = 2;
 char* reusizelist[8] = { "128 KB","256 KB","512 KB","1 MB","2 MB","4 MB","8 MB","16 MB"};
 unsigned char utilbuffer[328];
-char configfilename[11] = "dmbcfg,cfg";
+char configfilename[11] = "dmbcfg.cfg";
 unsigned int dm_apiversion = 0;
 unsigned char configversion = CFGVERSION;
 unsigned int slotaddress_start = 0;
+
+// Get NTP time functions
+unsigned char CheckStatusTime()
+{
+    // Function to check UII+ status
+
+    if (uii_status[0] != '0' || uii_status[1] != '0') {
+        printf("\nStatus: %s Data:%s", uii_status, uii_data);
+        return 1;
+    }
+    return 0;
+}
+
+void get_ntp_time()
+{
+    // Function to get time from NTP server and set UII+ time with this
+
+    struct tm *datetime;
+    extern struct _timezone _tz;
+    unsigned char attempt = 1;
+    unsigned char clock;
+    char settime[6];
+    unsigned char fullcmd[] = { 0x00, NET_CMD_SOCKET_WRITE, 0x00, \
+                               0x1b, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, \
+                               0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, \
+                               0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
+    unsigned char socket = 0;
+    time_t t;
+    char res[32];
+
+    printf("\nUpdating UII+ time from NTP Server.");
+    uii_get_time();
+    printf("\nUltimate datetime: %s", uii_data);
+
+    printf("\nConnecting to: %s", host);
+	socket = uii_udpconnect(host, 123); //https://github.com/markusC64/1541ultimate2/blob/master/software/io/network/network_target.cc
+    if(CheckStatusTime()) {
+        uii_socketclose(socket);
+        return;
+    }
+
+    printf("\nSending NTP request");
+	fullcmd[2] = socket;
+    uii_settarget(TARGET_NETWORK);
+    uii_sendcommand(fullcmd, 51);//3 + sizeof( ntp_packet ));
+	uii_readstatus();
+	uii_accept();
+    if(CheckStatusTime()) {
+        uii_socketclose(socket);
+        return;
+    }
+
+    // Do maximum of 4 attempts at receiving data
+    do
+    {
+        // Add delay of a second to avoid time to wait on response being too short
+        for(clock=0;clock<255;clock++) { ; }
+
+        // Print attempt number
+        printf("\nReading result attempt %d",attempt);
+
+        // Try to read incoming data        
+        uii_socketread(socket, 50);// 2 + sizeof( ntp_packet ));
+
+        // If data received, end loop. Else do new attempt till counter = 5
+        if(uii_success()) { 
+            attempt = 5;
+        } else {
+            attempt++;
+        }
+
+    } while (attempt<5);
+        
+    if(CheckStatusTime()) {
+        uii_socketclose(socket);
+        return;
+    }
+
+    // Convert time received to UCI format
+    t = uii_data[37] | (((unsigned long)uii_data[36])<<8)| (((unsigned long)uii_data[35])<<16)| (((unsigned long)uii_data[34])<<24);
+    t -= NTP_TIMESTAMP_DELTA;
+    
+    // Close socket
+    uii_socketclose(socket);
+
+    // Print time received and parse to UII+ format
+    printf("\nUnix epoch %lu", t);
+    _tz.timezone = secondsfromutc;
+    datetime = localtime(&t);
+    if (strftime(res, sizeof(res), "%F %H:%M:%S", datetime) == 0){
+        printf("\nError cannot parse date");
+        return;
+    }
+    printf("\nNTP datetime: %s", res);
+
+    // Set UII+ RTC clock
+    settime[0]=datetime->tm_year;
+    settime[1]=datetime->tm_mon + 1;
+    settime[2]=datetime->tm_mday;
+    settime[3]=datetime->tm_hour;
+    settime[4]=datetime->tm_min;
+    settime[5]=datetime->tm_sec;
+    uii_set_time(settime);
+    printf("\nStatus: %s", uii_status);
+}
+
+void time_main()
+{
+    if(timeonflag == 1)
+    {
+        get_ntp_time();
+    }
+
+    // Uncomment for debug
+    //cgetc();
+}
 
 //Main program
 void main() {
     int menuselect;
 
-    cputs("Starting UBoot64.\n\r");
- 
     SCREENW = 40;  //Set flag for 40 column
     DIRW = 25;
     MENUX = 25;
@@ -126,27 +243,18 @@ void main() {
         printf("\n\rPress key to exit.\n\r");
         cgetc();
         bankout();
-    }
-
-    cgetc();
+    } else { 		printf("Ultimate Command Interface detected.\n\r"); }
 
     uii_change_dir("/usb*/");
 	printf("\nDir changed\nStatus: %s", uii_status);
 
-    cgetc();
-
 	readconfigfile(configfilename);
 
-    cgetc();
+    // Load slot config
+    std_read("dmbslt.cfg",1); // Read config file
 
     // Set time from NTP server
-    //time_main();
-
-    // Load slot config
-    cputs("\n\n\rReading slot data.");
-    std_read("dmbslt.cfg"); // Read config file
-
-    cgetc();
+    time_main();
 
     // Init screen and menu
     //initScreen(DC_COLOR_BORDER, DC_COLOR_BG, DC_COLOR_TEXT);

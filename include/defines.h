@@ -68,7 +68,7 @@ extern BYTE addmountflag;
 extern BYTE runmountflag;
 extern struct SlotStruct {
     char path[100];
-    char menu[16];
+    char menu[21];
     char file[20];
     char cmd[80];
     char reu_image[20];
@@ -85,8 +85,8 @@ extern struct SlotStruct {
     BYTE image_b_id;
 };
 extern struct SlotStruct Slot;
-extern char newmenuname[36][21];
-extern unsigned int newmenuoldslot[36];
+extern char newmenuname[18][21];
+extern unsigned int newmenuoldslot[18];
 extern BYTE bootdevice;
 extern long secondsfromutc; 
 extern unsigned char timeonflag;

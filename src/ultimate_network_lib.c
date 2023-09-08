@@ -14,6 +14,9 @@ Patches and pull requests are welcome
 #include "ultimate_common_lib.h"
 #include "ultimate_network_lib.h"
 
+#pragma code-name	("CODE2");
+#pragma rodata-name	("RODATA2");
+
 // Network functions
 void uii_getipaddress(void)
 {
