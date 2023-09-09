@@ -112,19 +112,26 @@ char* pathconcat()
     char concat[100] ="";
     int x;
 
-    if ( devicetype[pathdevice] == VICE || devicetype[pathdevice] == U64)
-    {
-        strcat( concat, "cd:/");
+    if(fb_uci_mode) {
+        uii_get_path();
+        uii_data[100]=0;
+        strcpy(concat,uii_data);
+    } else {
+        if ( devicetype[pathdevice] == VICE || devicetype[pathdevice] == U64)
+        {
+            strcat( concat, "cd:/");
+        }
+        else
+        {
+            strcat( concat, "cd//");
+        }
+        for (x=0 ; x < depth ; ++x)
+        {
+            strcat( concat, path[x] );
+            strcat( concat, "/");
+        }
     }
-    else
-    {
-        strcat( concat, "cd//");
-    }
-    for (x=0 ; x < depth ; ++x)
-    {
-        strcat( concat, path[x] );
-        strcat( concat, "/");
-    }
+
     return concat;
 }
 
@@ -240,6 +247,33 @@ BYTE dosCommand(const BYTE lfn, const BYTE drive, const BYTE sec_addr, const cha
 int cmd(const BYTE device, const char *cmd)
 {
   return dosCommand(15, device, 15, cmd);
+}
+
+const char* getDeviceType(const BYTE device) {
+  BYTE idx;
+
+  if (device > sizeof(devicetype))
+    {
+      return "!d";
+    }
+  idx = cmd(device, "ui");
+  if (idx != 73)
+    {
+      linebuffer2[0] = 'Q';
+      linebuffer2[1] = value2hex[idx >> 4];
+      linebuffer2[2] = value2hex[idx & 15];
+      linebuffer2[3] = 0;
+      return linebuffer2;
+    }
+  for(idx = 1; idx < LAST_DRIVE_E; ++idx)
+    {
+      if(strstr(DOSstatus, drivetype[idx]))
+        {
+          devicetype[device] = idx;
+          return drivetype[idx];
+        }
+    }
+  return "!n";
 }
 
 void execute(char * prg, BYTE device, BYTE boot, char * command)

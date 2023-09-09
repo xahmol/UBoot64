@@ -2,7 +2,6 @@
 #define FILEIO__H
 
 #include "defines.h"
-#include "dir.h"
 
 void std_write(char * filename,unsigned char verbose);
 void std_read(char * filename,unsigned char verbose);

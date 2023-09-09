@@ -61,11 +61,6 @@
 #include "core.h"
 #include "fileio.h"
 #include "u-time.h"
-//#include "screen.h"
-//#include "version.h"
-//#include "base.h"
-//#include "bootmenu.h"
-//#include "utils.h"
 #include "ultimate_common_lib.h"
 #include "ultimate_dos_lib.h"
 #include "ultimate_time_lib.h"
@@ -74,6 +69,9 @@
 
 #pragma code-name	("CODE2");
 #pragma rodata-name	("RODATA2");
+
+// Entrypoints in other banks prototypes
+void mainLoopBrowse(void);
 
 // Global variables
 BYTE SCREENW;
@@ -117,6 +115,7 @@ unsigned char configversion = CFGVERSION;
 unsigned int slotaddress_start = 0;
 unsigned char menuselect;
 unsigned char fb_selection_made = 0;
+unsigned char fb_uci_mode;
 
 // Get NTP time functions
 unsigned char CheckStatusTime()
@@ -173,7 +172,10 @@ void get_ntp_time()
     do
     {
         // Add delay of a second to avoid time to wait on response being too short
-        for(clock=0;clock<255;clock++) { ; }
+        cia_seconds = 0;
+        cia_tensofsec = 0;
+        clock = cia_seconds;
+        while (cia_seconds == clock) { ; }
 
         // Print attempt number
         printf("\nReading result attempt %d",attempt);
@@ -206,10 +208,10 @@ void get_ntp_time()
     printf("\nUnix epoch %lu", t);
     _tz.timezone = secondsfromutc;
     datetime = localtime(&t);
-    if (strftime(res, sizeof(res), "%F %H:%M:%S", datetime) == 0){
-        printf("\nError cannot parse date");
-        return;
-    }
+    //if (strftime(res, sizeof(res), "%F %H:%M:%S", datetime) == 0){
+    //    printf("\nError cannot parse date");
+    //    return;
+    //}
     printf("\nNTP datetime: %s", res);
 
     // Set UII+ RTC clock
@@ -1376,11 +1378,12 @@ void main() {
 //
         switch (menuselect)
         {
-    //    case CH_F1:
-    //        // Filebrowser
-    //        bankrun(1);  // Jump to bank of filebrowser and start entry point
-    //        break;
-    //    
+        case CH_F1:
+            // Filebrowser
+            free(slotaddress_start); // Free slot memory to make room for dir
+            bankrun(1);  // Jump to bank of filebrowser and start entry point
+            break;
+        
     //    case CH_F4:
     //        config_main();
     //        break;
@@ -1409,5 +1412,5 @@ void main() {
 const struct codetable codetable [] =
 {
 	{&main,		1},
-	{&mainmenu,		1}
+	{&mainLoopBrowse,		2}
 };

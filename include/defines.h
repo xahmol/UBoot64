@@ -109,6 +109,7 @@ extern unsigned char configversion;
 extern unsigned int slotaddress_start;
 extern unsigned char menuselect;
 extern unsigned char fb_selection_made;
+extern unsigned char fb_uci_mode;
 
 #define CH_LARROW 0x5f
 #define CH_UARROW 0x5e
