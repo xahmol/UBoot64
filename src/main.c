@@ -33,6 +33,8 @@
 // - ntp2ultimate by MaxPlap
 //   https://github.com/MaxPlap/ntp2ultimate
 //   Time via NTP code
+// - EPOCH-to-time-date-converter by sidsingh78
+//   https://github.com/sidsingh78/EPOCH-to-time-date-converter/blob/master/epoch_conv.c
 //
 // Requires and made possible by the Ultimate II+ cartridge,
 // Created by Gideon Zweijtzer
