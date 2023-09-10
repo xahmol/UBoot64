@@ -103,8 +103,6 @@ struct Directory {
 };
 struct Directory cwd;
 
-static BYTE sorted = 0;
-
 void freeDir() {
 // Free memory of directory structure
     current = cwd.firstelement;
@@ -379,11 +377,10 @@ unsigned char UCIReadDir(struct cbm_dirent* l_dirent) {
     return 0;
 }
 
-unsigned char readDir(const BYTE device, const BYTE sorted) {
+unsigned char readDir(const BYTE device) {
 /**
  * read directory of device @p device.
  * @param device CBM device number
- * @param sorted if true, return directory entries sorted.
  * @param context window context.
  * @return 1 on success
  */
@@ -408,14 +405,13 @@ unsigned char readDir(const BYTE device, const BYTE sorted) {
             cbm_closedir(device);
             return NULL;
         }
-        else {
-            uii_open_dir();
-            if(!uii_success()) {
-                uii_abort();
-                return NULL;
-            }
-            uii_get_dir();
+    } else {
+        uii_open_dir();
+        if(!uii_success()) {
+            uii_abort();
+            return NULL;
         }
+        uii_get_dir();
     }
 
     while(1)
@@ -443,6 +439,8 @@ unsigned char readDir(const BYTE device, const BYTE sorted) {
             gotoxy(0, y);
             if(!fb_uci_mode) {
                 cprintf("[%02i]", device);
+            } else {
+                cprintf("[UCI");
             }
         } else {
             gotoxy(x + (cnt>>2), y);
@@ -479,41 +477,9 @@ unsigned char readDir(const BYTE device, const BYTE sorted) {
             previous = current;
         } else {
             // all other elements
-            if (sorted) {
-                // iterate the sorted list
-                for(iterate = cwd.firstelement; iterate->next; iterate = iterate->next)
-                {
-                  // if the new name is greater than the current list item,
-                  // it needs to be inserted in the previous position.
-                  if (strncmp(iterate->dirent.name, current->dirent.name, 16) > 0)
-                    {
-                      // if the previous position is NULL, insert at the front of the list
-                      if (! iterate->prev) {
-                          current->next = iterate;
-                          iterate->prev = current;
-                          cwd.firstelement = current;
-                      }
-                      else {
-                          // insert somewhere in the middle
-                          p = iterate->prev;
-                          p->next = current;
-                          current->next = iterate;   
-                          current->prev = p;
-                          iterate->prev = current;
-                      }
-                      inserted = 1;
-                    }
-                }
-                if(!inserted) {
-                    iterate->next = current;
-                    current->prev = iterate;
-                }
-            }
-            else {
-              current->prev = previous;
-              previous->next = current;
-              previous = current;
-            }
+            current->prev = previous;
+            previous->next = current;
+            previous = current;
         }
     }
     
@@ -609,16 +575,15 @@ void drawDirFrame()
   if(fb_uci_mode) {
     cprintf("[UCI file system]");
   } else {
-    cprintf("[%02i] %s",device,cwd.name);
+    cprintf("[%02i] %.20s",device,cwd.name);
+    gotoxy(0,24);
+    cprintf("(%s) %u blocks free",drivetype[devicetype[device]],cwd.free);
   }
-  
-  gotoxy(0,24);
-  cprintf("(%s) %u blocks free",drivetype[devicetype[device]],cwd.free);
 
   if(trace || fb_uci_mode) {
     if(fb_uci_mode) {
         uii_get_path();
-        strcpy(linebuffer,uii_data);
+        strcpy(utilbuffer,AscToPet(uii_data));
     } else {
         strcpy((char*)utilbuffer,pathconcat());
     }
@@ -720,14 +685,14 @@ void showDir()
   printDir();
 }
 
-void refreshDir(const BYTE sorted)
+void refreshDir()
 {
-  readDir(device, sorted);
+  readDir(device);
   cwd.selected=cwd.firstelement;
   showDir();
 }
 
-int changeDir(const BYTE device, char *dirname, const BYTE sorted)
+int changeDir(const BYTE device, char *dirname)
 {
     int ret;
     register BYTE l = strlen(dirname);
@@ -740,7 +705,7 @@ int changeDir(const BYTE device, char *dirname, const BYTE sorted)
           strcpy(imagename,dirname );
         }   
         if(fb_uci_mode) {   
-            uii_change_dir(dirname);
+            uii_change_dir(PetToAsc(dirname));
         } else {
             if (mountflag==1 || (l == 1 && dirname[0]==CH_LARROW) || 
             devicetype[device] == VICE || devicetype[device] == U64) {
@@ -768,7 +733,7 @@ int changeDir(const BYTE device, char *dirname, const BYTE sorted)
     } else {
         ret = cmd(device, linebuffer);
     }
-    if (ret == 0) { refreshDir(sorted); }
+    if (ret == 0) { refreshDir(); }
     return ret;
 }
 
@@ -791,7 +756,6 @@ void updateMenu(void)
   cputsxy(MENUX+1,++menuy,"  \x5e Root dir");
   cputsxy(MENUX+1,++menuy,"  T Top");
   cputsxy(MENUX+1,++menuy,"  E End");
-  cputsxy(MENUX+1,++menuy,"  S Sort");
   cputsxy(MENUX+1,++menuy,"P/U Page up/do");
   cputsxy(MENUX+1,++menuy,"Cur Navigate");
   if(!fb_uci_mode) {
@@ -841,7 +805,7 @@ void FindFirstIECDrive() {
 
     while(++i < MAXDEVID+1) {
         device = i;
-        if(readDir(device, sorted)) {
+        if(readDir(device)) {
             getDeviceType(device);
             showDir();
             goto found_first_drive;
@@ -856,7 +820,7 @@ void mainLoopBrowse(void)
   unsigned int pos = 0;
   BYTE lastpage = 0;
   BYTE nextpage = 0;
-  int DIRH = (SCREENW==80)? 38:19;
+  int DIRH = 19;
   int xpos,ypos,yoff;
   unsigned char count;
   
@@ -869,8 +833,13 @@ void mainLoopBrowse(void)
   fb_uci_mode = 1;
   fb_selection_made = 2;
 
-  readDir(0,sorted);
+  memset(&cwd,0,sizeof(cwd));
+  memset(disk_id_buf, 0, DISK_ID_LEN);
+
+  uii_change_dir_home();
   updateScreen();
+  readDir(0);
+  showDir();
 
   while(1)
     {
@@ -883,12 +852,9 @@ void mainLoopBrowse(void)
 
       switch (cgetc())
         {
-        case 's':
-          sorted = ! sorted;
-          // fallthrough
         case '1':
         case CH_F1:
-          readDir(device, sorted);
+          readDir(device);
           showDir();
           break;
 
@@ -897,6 +863,9 @@ void mainLoopBrowse(void)
           updateMenu();
           if(!fb_uci_mode) {
             FindFirstIECDrive();
+          } else {
+            readDir(device);
+            showDir();
           }
           break;
 
@@ -939,7 +908,7 @@ void mainLoopBrowse(void)
             {
               trace = 1;
               pathdevice = device;
-              changeDir(device, NULL, sorted);
+              changeDir(device, NULL);
             }
             else
             {
@@ -1055,7 +1024,7 @@ void mainLoopBrowse(void)
               if (trace == 1) {
                 strcpy(path[depth++],current->dirent.name);
               }
-              changeDir(device, current->dirent.name, sorted);
+              changeDir(device, current->dirent.name);
             }
             if(reuflag) {
                 fb_selection_made=1;
@@ -1071,9 +1040,9 @@ void mainLoopBrowse(void)
             --depth;
           }
           if(fb_uci_mode) {
-            changeDir(0, "..", sorted);
+            changeDir(0, "..");
           } else {
-            changeDir(device, devicetype[device] == U64?"..":"\xff", sorted);
+            changeDir(device, devicetype[device] == U64?"..":"\xff");
           }
           break;
 
@@ -1128,7 +1097,7 @@ void mainLoopBrowse(void)
           {
             depth = 0;
           }
-          changeDir(device, NULL, sorted);
+          changeDir(device, NULL);
           break;
 
         case 'a':
