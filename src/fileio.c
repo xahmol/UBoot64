@@ -80,6 +80,11 @@ void CheckStatus(char* message) {
     }
 }
 
+void FreeSlotMemory() {
+  free((void*)slotaddress_start); 
+  slotaddress_start=0;
+}
+
 void std_write(char * filename,unsigned char verbose)
 {
     unsigned char x;
@@ -111,7 +116,7 @@ void std_read(char * filename,unsigned char verbose)
     unsigned char x;
 
     // Allocate slots memory
-    if(slotaddress_start) { free((void*)slotaddress_start); }
+    if(slotaddress_start) { FreeSlotMemory(); }
     slotaddress_start = (unsigned int) calloc(18,sizeof(Slot));
 
     // Abort if insufficient memory

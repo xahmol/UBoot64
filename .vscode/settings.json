@@ -3,6 +3,9 @@
         "BLOT.C": "cpp",
         "streams.C": "cpp",
         "MAIN.C": "cpp",
-        "ultimate_dos_lib.h": "c"
+        "ultimate_dos_lib.h": "c",
+        "chrono": "c",
+        "system_error": "c",
+        "xlocale": "c"
     }
 }

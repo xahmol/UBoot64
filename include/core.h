@@ -2,7 +2,6 @@
 #define CORE__H
 
 #include "defines.h"
-#include "dir.h"
 
 void errorexit();
 void CheckStatus(char* message);
@@ -11,6 +10,7 @@ void cspaces(unsigned char number);
 char* pathconcat();
 char getkey(BYTE mask);
 int cmd(const BYTE device, const char *cmd);
+const char* getDeviceType(const BYTE device);
 void execute(char * prg, BYTE device, BYTE boot, char * command);
 int textInput(const BYTE xpos, const BYTE ypos, char *str, const BYTE size);
 void clearArea(const BYTE xpos, const BYTE ypos, const BYTE xsize, const BYTE ysize);
@@ -25,5 +25,10 @@ extern const char* drivetype[];
 extern char linebuffer[81];
 extern BYTE device;
 extern char linebuffer2[];
+
+extern const char *value2hex;
+extern const char *reg_types[];
+extern const char *oth_types[];
+extern char bad_type[4];
 
 #endif

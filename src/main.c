@@ -72,6 +72,9 @@
 #pragma code-name	("CODE2");
 #pragma rodata-name	("RODATA2");
 
+// Entrypoints in other banks prototypes
+void mainLoopBrowse(void);
+
 // Global variables
 BYTE SCREENW;
 BYTE DIRW;
@@ -114,7 +117,7 @@ unsigned char configversion = CFGVERSION;
 unsigned int slotaddress_start = 0;
 unsigned char menuselect;
 unsigned char fb_selection_made = 0;
-
+unsigned char fb_uci_mode;
 
 // Get NTP time functions
 unsigned char CheckStatusTime()
@@ -1423,10 +1426,11 @@ void main() {
 //
         switch (menuselect)
         {
-    //    case CH_F1:
-    //        // Filebrowser
-    //        bankrun(1);  // Jump to bank of filebrowser and start entry point
-    //        break;
+        case CH_F1:
+            // Filebrowser
+            FreeSlotMemory(); // Free slot memory to make room for dir
+            bankrun(1);  // Jump to bank of filebrowser and start entry point
+            break;
     //    
     //    case CH_F4:
     //        config_main();
@@ -1456,5 +1460,5 @@ void main() {
 const struct codetable codetable [] =
 {
 	{&main,		1},
-	{&mainmenu,		1}
+	{&mainLoopBrowse,		2}
 };
