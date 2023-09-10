@@ -60,7 +60,7 @@
 #include "version.h"
 #include "core.h"
 #include "fileio.h"
-#include "u-time.h"
+#include "petscii_ascii.h"
 #include "ultimate_common_lib.h"
 #include "ultimate_dos_lib.h"
 #include "fc3.h"
@@ -324,7 +324,7 @@ unsigned char UCIReadDir(struct cbm_dirent* l_dirent) {
     uii_data[17]=0;
 
     // Copy to buffer and find out length
-    strcpy(linebuffer,uii_data+1);
+    strcpy(linebuffer,AscToPet(uii_data+1));
     len=strlen(linebuffer);
 
     // check file type
@@ -869,6 +869,7 @@ void mainLoopBrowse(void)
   fb_uci_mode = 1;
   fb_selection_made = 2;
 
+  readDir(0,sorted);
   updateScreen();
 
   while(1)

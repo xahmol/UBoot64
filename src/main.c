@@ -35,6 +35,9 @@
 //   Time via NTP code
 // - EPOCH-to-time-date-converter by sidsingh78
 //   https://github.com/sidsingh78/EPOCH-to-time-date-converter/blob/master/epoch_conv.c
+// - petcom version 1.00 by Craig Bruce, 18-May-1995
+//   Convert from PETSCII to ASCII, or vice-versa.
+//   https://codebase64.org/doku.php?id=source_conversion
 //
 // Requires and made possible by the Ultimate II+ cartridge,
 // Created by Gideon Zweijtzer
