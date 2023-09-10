@@ -61,11 +61,6 @@
 #include "core.h"
 #include "fileio.h"
 #include "u-time.h"
-//#include "screen.h"
-//#include "version.h"
-//#include "base.h"
-//#include "bootmenu.h"
-//#include "utils.h"
 #include "ultimate_common_lib.h"
 #include "ultimate_dos_lib.h"
 #include "ultimate_time_lib.h"
@@ -97,7 +92,7 @@ struct SlotStruct Slot;
 char newmenuname[18][21];
 unsigned int newmenuoldslot[18];
 BYTE bootdevice;
-long secondsfromutc = 0; 
+long secondsfromutc = 7200; 
 unsigned char timeonflag = 1;
 char host[80] = "pool.ntp.org";
 char imagename[20] = "default.reu";
@@ -118,6 +113,7 @@ unsigned int slotaddress_start = 0;
 unsigned char menuselect;
 unsigned char fb_selection_made = 0;
 
+
 // Get NTP time functions
 unsigned char CheckStatusTime()
 {
@@ -130,22 +126,83 @@ unsigned char CheckStatusTime()
     return 0;
 }
 
+char* UNIX_epoch_to_UII_time(time_t epoch) {
+// Convert UNIX time epoch to UII readable time format
+
+    static unsigned char month_days[12]={31,28,31,30,31,30,31,31,30,31,30,31};
+
+    unsigned char ntp_hour, ntp_minute, ntp_second, ntp_day, ntp_month;
+    unsigned char leap_days=0;
+    unsigned char leap_year_ind=0;
+    unsigned int temp_days, i;
+    unsigned int ntp_year, days_since_epoch, day_of_year;
+    char settime[6];
+
+    // Adjust for timezone
+    epoch+=secondsfromutc;
+
+    // Calculate time
+    ntp_second = epoch%60;
+    epoch /= 60;
+    ntp_minute = epoch%60;
+    epoch /= 60;
+    ntp_hour  = epoch%24;
+    epoch /= 24;
+
+    // Calculate date
+
+    // Number of days since epoch
+    days_since_epoch = epoch;
+    // ball parking year, may not be accurate!
+    ntp_year = 1970+(days_since_epoch/365);
+    // Calculating number of leap days since epoch/1970
+    for (i=1972; i<ntp_year; i+=4) {                                
+        if(((i%4==0) && (i%100!=0)) || (i%400==0)) leap_days++;
+    }
+    // Calculating accurate current year by (days_since_epoch - extra leap days)
+    ntp_year = 1970+((days_since_epoch - leap_days)/365);
+    day_of_year = ((days_since_epoch - leap_days)%365)+1;
+
+    if(((ntp_year%4==0) && (ntp_year%100!=0)) || (ntp_year%400==0)) {
+        month_days[1]=29;     //February = 29 days for leap years
+        leap_year_ind = 1;    //if current year is leap, set indicator to 1 
+    }
+    else { month_days[1]=28; } //February = 28 days for non-leap years 
+
+    // Calculating current Month
+    temp_days=0;
+    for (ntp_month=0 ; ntp_month <= 11 ; ntp_month++) {
+        if (day_of_year <= temp_days) break; 
+        temp_days = temp_days + month_days[ntp_month];
+    }
+
+    // Calculating current Date
+    temp_days = temp_days - month_days[ntp_month-1];
+    ntp_day = day_of_year - temp_days;
+
+    // Build UII time
+    settime[0]=ntp_year-1900;
+    settime[1]=ntp_month;
+    settime[2]=ntp_day;
+    settime[3]=ntp_hour;
+    settime[4]=ntp_minute;
+    settime[5]=ntp_second;
+
+    return settime;
+}
+
 void get_ntp_time()
 {
     // Function to get time from NTP server and set UII+ time with this
 
-    struct tm *datetime;
-    extern struct _timezone _tz;
     unsigned char attempt = 1;
     unsigned char clock;
-    char settime[6];
     unsigned char fullcmd[] = { 0x00, NET_CMD_SOCKET_WRITE, 0x00, \
                                0x1b, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, \
                                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, \
                                0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
     unsigned char socket = 0;
     time_t t;
-    char res[32];
 
     printf("\nUpdating UII+ time from NTP Server.");
     uii_get_time();
@@ -173,8 +230,10 @@ void get_ntp_time()
     do
     {
         // Add delay of a second to avoid time to wait on response being too short
-        for(clock=0;clock<255;clock++) { ; }
-
+        cia_seconds = 0;
+        cia_tensofsec = 0;
+        clock = cia_seconds;
+        while (cia_seconds == clock) { ; }
         // Print attempt number
         printf("\nReading result attempt %d",attempt);
 
@@ -204,23 +263,12 @@ void get_ntp_time()
 
     // Print time received and parse to UII+ format
     printf("\nUnix epoch %lu", t);
-    _tz.timezone = secondsfromutc;
-    datetime = localtime(&t);
-    if (strftime(res, sizeof(res), "%F %H:%M:%S", datetime) == 0){
-        printf("\nError cannot parse date");
-        return;
-    }
-    printf("\nNTP datetime: %s", res);
-
+    
     // Set UII+ RTC clock
-    settime[0]=datetime->tm_year;
-    settime[1]=datetime->tm_mon + 1;
-    settime[2]=datetime->tm_mday;
-    settime[3]=datetime->tm_hour;
-    settime[4]=datetime->tm_min;
-    settime[5]=datetime->tm_sec;
-    uii_set_time(settime);
+    uii_set_time(UNIX_epoch_to_UII_time(t));    
     printf("\nStatus: %s", uii_status);
+    uii_get_time();
+    printf("\nRTC clock set to %s",uii_data);
 }
 
 void time_main()
@@ -229,9 +277,6 @@ void time_main()
     {
         get_ntp_time();
     }
-
-    // Uncomment for debug
-    //cgetc();
 }
 
 // Menu slot functions
