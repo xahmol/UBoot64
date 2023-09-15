@@ -85,7 +85,7 @@ extern struct SlotStruct {
 };
 extern struct SlotStruct* Slot;
 extern struct SlotStruct* FirstSlot;
-extern struct SlotStruct BufferSlot;
+extern struct SlotStruct* BufferSlot;
 extern char newmenuname[18][21];
 extern unsigned int newmenuoldslot[18];
 extern long secondsfromutc; 
@@ -103,6 +103,7 @@ extern unsigned char reusize;
 extern char* reusizelist[8];
 extern unsigned char utilbuffer[86];
 extern char configfilename[11];
+extern char slotfilename[11];
 extern unsigned char configversion;
 extern unsigned char menuselect;
 extern unsigned char fb_selection_made;
