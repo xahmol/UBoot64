@@ -68,6 +68,8 @@
 #pragma code-name	("CODE3");
 #pragma rodata-name	("RODATA3");
 
+#define X(a,b,c) linebuffer[len-3]==a && linebuffer[len-2]==b && linebuffer[len-1]==c
+
 #define CBM_T_FREE 100
 
 #define DISK_ID_LEN 5
@@ -219,8 +221,6 @@ unsigned char myCbmReadDir(const BYTE device, struct cbm_dirent* l_dirent) {
     }
 
   // check file type
-#define X(a,b,c) linebuffer[len-3]==a && linebuffer[len-2]==b && linebuffer[len-1]==c
-
   if (X('p','r','g'))
     {
       l_dirent->type = CBM_T_PRG;
@@ -318,16 +318,11 @@ unsigned char UCIReadDir(struct cbm_dirent* l_dirent) {
     // Check if entry is a dir by checking if bit 4 of first byte is set
     if(uii_data[0]&0x10) { presenttype=CBM_T_DIR; }
     
-    // Truncate entry at 16 chars
-    uii_data[17]=0;
-
     // Copy to buffer and find out length
-    strcpy(linebuffer,AscToPet(uii_data+1));
+    StringSafeCopy(linebuffer,AscToPet(uii_data+1),16);
     len=strlen(linebuffer);
 
     // check file type
-    #define X(a,b,c) linebuffer[len-3]==a && linebuffer[len-2]==b && linebuffer[len-1]==c
-
     if(!presenttype && len>4) {
         if (X('p','r','g') || X('P','R','G'))
         {
@@ -371,7 +366,7 @@ unsigned char UCIReadDir(struct cbm_dirent* l_dirent) {
     if(!presenttype) { presenttype = CBM_T_SEQ; }
 
     // Set direntry data
-    strcpy(l_dirent->name,linebuffer);
+    StringSafeCopy(l_dirent->name,linebuffer,16);
     l_dirent->type = presenttype;
     l_dirent->size = 0;
     return 0;
@@ -389,9 +384,6 @@ unsigned char readDir(const BYTE device) {
     BYTE ret;
     const BYTE y = 3;
     BYTE x = 0;
-    BYTE inserted;
-    struct DirElement *iterate;
-    struct DirElement *p;
 
     previous = 0;
 
@@ -416,7 +408,6 @@ unsigned char readDir(const BYTE device) {
 
     while(1)
     {
-        inserted = 0;
         current = calloc(1,sizeof(direlement_size));
         if (!current) { goto stop; }
 
@@ -426,6 +417,7 @@ unsigned char readDir(const BYTE device) {
             ret = UCIReadDir(&(current->dirent));
         }
         if (ret != 0) {
+            free(current);
             goto stop;
         }
     
@@ -468,6 +460,7 @@ unsigned char readDir(const BYTE device) {
         {
             // blocks free entry
             cwd.free=current->dirent.size;
+            free(current);
             goto stop;
         }
         else if (cwd.firstelement==NULL)
@@ -499,6 +492,9 @@ unsigned char readDir(const BYTE device) {
 // File browser operations functions
 const char* fileTypeToStr(BYTE ft)
 {
+  if(fb_uci_mode && ft != CBM_T_DIR) {
+    return "   ";
+  }
   if (ft & _CBM_T_REG)
     {
       ft &= ~_CBM_T_REG;
@@ -551,7 +547,8 @@ void CheckMounttype(const char *dirname) {
           }
         else if ((dirname[l-3] == 'd' || dirname[l-3] == 'D') &&
                  (dirname[l-2] == 'n' || dirname[l-2] == 'N') &&
-                 (dirname[l-1] == 'p' || dirname[l-1] == 'P'))
+                 (dirname[l-1] == 'p' || dirname[l-1] == 'P') &&
+                 !fb_uci_mode)
           {
             mountflag = 1;
           }
@@ -563,6 +560,11 @@ void CheckMounttype(const char *dirname) {
           }
       }
   }
+
+  //gotoxy(26,23);
+  //cprintf("Len: %3d",l);
+  //gotoxy(26,24);
+  //cprintf("MF : %3d",mountflag);
 }
 
 void drawDirFrame()
@@ -583,22 +585,22 @@ void drawDirFrame()
   if(trace || fb_uci_mode) {
     if(fb_uci_mode) {
         uii_get_path();
-        strcpy(utilbuffer,AscToPet(uii_data));
+        StringSafeCopy(linebuffer,AscToPet(uii_data),99);
     } else {
-        strcpy((char*)utilbuffer,pathconcat());
+        StringSafeCopy(linebuffer,pathconcat(),99);
     }
-    length = strlen((char*)utilbuffer);
+    length = strlen((char*)linebuffer);
     if(length > DIRW) {
-      strcpy(linebuffer,(char*)utilbuffer+length-DIRW);
+      strcpy(linebuffer2,(char*)linebuffer+length-DIRW);
     } else {
-      strcpy(linebuffer,(char*)utilbuffer);
+      strcpy(linebuffer2,(char*)linebuffer);
     }
   }
   else {
-    strcpy(linebuffer,"No dirtrace active.");
+    strcpy(linebuffer2,"No dirtrace active.");
   }
   gotoxy(0,4);
-  cputs(linebuffer);
+  cputs(linebuffer2);
 }
 
 void clrDir()
@@ -648,7 +650,7 @@ void printDir() {
     BYTE lastpage = 0;
     int idx = 0;
     int xpos,ypos;
-    int DIRH = (SCREENW==80)? 38:19;
+    int DIRH = 19;
     const char *typestr = NULL; 
 
     lastpage=pos/DIRH;
@@ -700,12 +702,31 @@ int changeDir(const BYTE device, char *dirname)
     if (dirname) {
         CheckMounttype(dirname);
 
-        if(mountflag==2 && trace == 1) {
+        if(mountflag==2 && (trace == 1 || fb_uci_mode)) {
           reuflag = 1;
-          strcpy(imagename,dirname );
+          StringSafeCopy(imagename,dirname,19);
         }   
-        if(fb_uci_mode) {   
+        if(fb_uci_mode && !inside_mount) {   
             uii_change_dir(PetToAsc(dirname));
+            if(mountflag == 1) {
+                if(!uii_success()) { return 1; }
+                uii_get_deviceinfo();
+                if(!uii_success()) {
+                    clrscr();
+                    printf("Old Ultimate firmware detected.\n\r");
+                    errorexit();
+                }
+                uii_enable_drive_a();
+                uii_mount_disk(imageaid,dirname);
+                imageaid = uii_data[2];
+                StringSafeCopy(imageaname,dirname,19);
+                uii_get_path();
+                StringSafeCopy(imageapath,AscToPet(uii_data),99);
+                if(!uii_success()) { return 1; }
+                trace = 1;
+                inside_mount = 1;
+                fb_uci_mode = 0;
+            }
         } else {
             if (mountflag==1 || (l == 1 && dirname[0]==CH_LARROW) || 
             devicetype[device] == VICE || devicetype[device] == U64) {
@@ -719,7 +740,7 @@ int changeDir(const BYTE device, char *dirname)
 
         if (trace == 1 )
         {
-            strcpy(path[depth], dirname);
+            StringSafeCopy(path[depth], dirname,19);
         }
     } else {
         if(fb_uci_mode) {
@@ -765,21 +786,36 @@ void updateMenu(void)
     cputsxy(MENUX+1,++menuy," AB Add mount");
     cputsxy(MENUX+1,++menuy,"  M Run mount");
   } else { menuy += 2; }
+  cputsxy(MENUX+1,++menuy,"  1 Toggle ,1");
   cputsxy(MENUX+1,++menuy," F7 Quit");
 
   menuy++;
   if(fb_uci_mode) {
-    cputsxy(MENUX,++menuy," UCI mode");
+    cputsxy(MENUX+1,++menuy,"UCI mode");
   } else {
-    cputsxy(MENUX,++menuy," IEC mode");
+    cputsxy(MENUX+1,++menuy,"IEC mode");
   }
+  if(inside_mount) {
+    cputsxy(MENUX+1,++menuy,"Inside mount");
+    gotoxy(MENUX+1,++menuy);
+    cprintf("A at ID %2d",imageaid);
+  }
+
   if (trace == 1)
   {
-    cputsxy(MENUX,++menuy," Trace   ON ");
+    cputsxy(MENUX+1,++menuy,"Trace   ON ");
   }
   else
   {
-    cputsxy(MENUX,++menuy," Trace   OFF");
+    cputsxy(MENUX+1,++menuy,"Trace   OFF");
+  }
+  if (comma1 == 1)
+  {
+    cputsxy(MENUX+1,++menuy,",1 Load ON ");
+  }
+  else
+  {
+    cputsxy(MENUX+1,++menuy,",1 Load OFF");
   }
 }
 
@@ -830,6 +866,7 @@ void mainLoopBrowse(void)
   addmountflag = 0;
   runmountflag = 0;
   mountflag = 0;
+  inside_mount = 0;
   fb_uci_mode = 1;
   fb_selection_made = 2;
 
@@ -853,6 +890,10 @@ void mainLoopBrowse(void)
       switch (cgetc())
         {
         case '1':
+            comma1 = !comma1;
+            updateMenu();
+            break;
+
         case CH_F1:
           readDir(device);
           showDir();
@@ -979,7 +1020,7 @@ void mainLoopBrowse(void)
               cwd.pos--;
               if (lastpage!=nextpage)
                 {
-                  for(count=0;count<DIRH;count++) {
+                  for(count=0;count<DIRH-1;count++) {
                     if(current->prev != NULL) {
                       current=current->prev;
                     }
@@ -1008,11 +1049,11 @@ void mainLoopBrowse(void)
             {
               if (trace == 0 && !fb_uci_mode)
               {
-                execute(current->dirent.name,device, 0, "");
+                execute(current->dirent.name,device, comma1*EXEC_COMMA1, "");
               }
               else
               {
-                strcpy(pathfile, current->dirent.name );
+                StringSafeCopy(pathfile, current->dirent.name,19);
                 pathrunboot = 0;
                 fb_selection_made = 1;
                 goto done;
@@ -1022,7 +1063,7 @@ void mainLoopBrowse(void)
           if (cwd.selected)
             {
               if (trace == 1) {
-                strcpy(path[depth++],current->dirent.name);
+                StringSafeCopy(path[depth++],current->dirent.name,19);
               }
               changeDir(device, current->dirent.name);
             }
@@ -1104,7 +1145,7 @@ void mainLoopBrowse(void)
           CheckMounttype(current->dirent.name);
           if(mountflag==1) {
             addmountflag = 1;
-            strcpy(imageaname,current->dirent.name);
+            StringSafeCopy(imageaname,current->dirent.name,19);
             fb_selection_made=1;
             goto done;
           }
@@ -1113,7 +1154,7 @@ void mainLoopBrowse(void)
           CheckMounttype(current->dirent.name);
           if(mountflag==1) {
             addmountflag = 2;
-            strcpy(imagebname,current->dirent.name);
+            StringSafeCopy(imagebname,current->dirent.name,19);
             fb_selection_made=1;
             goto done;
           }
@@ -1121,7 +1162,7 @@ void mainLoopBrowse(void)
         case 'm':
           if(mountflag==1 && imageaid) {
             runmountflag = 1;
-            strcpy(pathfile, current->dirent.name );
+            StringSafeCopy(pathfile, current->dirent.name,19);
             pathrunboot = 0;
             fb_selection_made=1;
             goto done;

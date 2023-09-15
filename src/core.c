@@ -67,8 +67,8 @@ const char *oth_types[] = { "DEL","CBM","DIR","LNK","OTH","HDR"};
 char bad_type[4];
 
 BYTE device = 8;
-char linebuffer[81];
-char linebuffer2[81];
+char linebuffer[100];
+char linebuffer2[100];
 char DOSstatus[40];
 
 /// string descriptions of enum drive_e
@@ -82,6 +82,14 @@ void errorexit()
   printf("\n\rPress key to exit to BASIC.");
   cgetc();
   bankout();
+}
+
+void StringSafeCopy(char* dest, char* src, unsigned char maxlen) {
+    // Function to safely copy a string up to a maximum length to destination string
+    // Ensure it is always zero terminated
+
+    strncpy(dest,src,maxlen);
+    if(strlen(src)>maxlen) { dest[maxlen]=0; }
 }
 
 void mid(const char *src, size_t start, size_t length, char *dst, size_t dstlen)
@@ -114,8 +122,7 @@ char* pathconcat()
 
     if(fb_uci_mode) {
         uii_get_path();
-        uii_data[100]=0;
-        strcpy(concat,uii_data);
+        StringSafeCopy(concat,uii_data,99);
     } else {
         if ( devicetype[pathdevice] == VICE || devicetype[pathdevice] == U64)
         {
@@ -172,15 +179,6 @@ void initScreen(const BYTE border, const BYTE bg, const BYTE text)
   bordercolor(border);
   bgcolor(bg);
   textcolor(text);
-  clrscr();
-}
-
-/* restore basic screen mode */
-void exitScreen(void)
-{
-  bordercolor(COLOR_BLACK);
-  bgcolor(COLOR_BLACK);
-  textcolor(COLOR_YELLOW);
   clrscr();
 }
 
@@ -283,84 +281,46 @@ void execute(char * prg, BYTE device, BYTE boot, char * command)
   // prg:     Filename
   // device:  device number
   // boot:    Execute flag
-  //          bit 0: Run from mount
-  //          bit 1: Force 8
-  //          bit 2: Run 64
-  //          bit 3: Fast
-  //          bit 4: Boot
+  //          bit 0: Mount flag
+  //          bit 1: Load with ,1
   // command: User defined command to be executed before execution.
   //          Empty is no command.
 
-  int ypos = 2;
-  int numberenter =1;
-  int x;
+  unsigned int pos=2;
+  unsigned char numberenter = 2;
+  unsigned char x;
   
-  //getDeviceType(device);  // Recognise drive type of device
-  //
-  //exitScreen(); // prepare the screen with the basic command to load the next program
-//
-  //gotoxy(0,ypos);
-//
-  //if (strlen(command) != 0)
-  //{
-  //  cprintf("%s", command);
-  //  ypos = ypos + (strlen(command)/SCREENW) + 3;
-  //  gotoxy(0,ypos);
-  //  numberenter++;
-  //}
-//
-  //if(boot & EXEC_RUN64) {
-  //  // Run in C65 mode
-  //  if(dm_apipresent==1 && dm_apiversion>1)
-  //  {
-  //    // Set filename
-//	    strcpy(dm_prgnam,prg);
-  //    // Set filename length
-  //    dm_prglen = strlen(prg);
-  //    // Set file drive ID
-  //    dm_devid = device;
-  //    // Print call to start in 64 mode function
-  //    cprintf("sys %i",&dm_run64);
-  //  }
-  //} else {
-  //  // Force 8 mode
-  //  if(boot & EXEC_FRC8) {
-  //    if(dm_apipresent==1 && dm_apiversion>0)
-  //    {
-  //      dm_sethsidviaapi();
-  //    }
-  //    else
-  //    {
-  //      cputs("poke 673,8");
-  //      gotoxy(0,ypos+3);
-  //      numberenter++;
-  //    }
-  //    device = 8;
-  //  }
-//
-  //  // Fast mode
-  //  if(boot & EXEC_FAST) {
-  //    cprintf("fast:");
-  //  }
-//
-  //  // Boot or just run
-  //  if(boot & EXEC_BOOT) {
-  //    cprintf("boot u%i", device);
-  //  } else {
-  //    cprintf("run\"%s\",u%i", prg, device);
-  //  }
-  //}
+  // First output two enters
+  execute_commands[0] = 0x0d;
+  execute_commands[1] = 0x0d;
 
-  // put CRs in keyboard buffer
-  //for(x=0;x<numberenter;x++)
-  //{
-  //  *((unsigned char *)KBCHARS+x)=13;
-  //}
-  //*((unsigned char *)KBNUM)=numberenter;
-  //  
-  //// exit DraCopy, which will execute the BASIC LOAD above
-  //gotoxy(0,0);
-  //exit(0);
+  // Output user defined command if needed
+  if (strlen(command) != 0)
+  {
+    StringSafeCopy(execute_commands+pos, command, 199-pos);
+    pos = strlen(command);
+    execute_commands[pos++] = 0x0d;
+    numberenter++;
+  }
+
+  // Output load and run commands
+  if(boot&EXEC_COMMA1) {
+    // Load with ,1
+    sprintf(execute_commands+pos,"load\"%s\",%i,1%c%c%c%c%crun%c%c", prg, device,0x0d,0x0d,0x0d,0x0d,0x0d,0x0d,0);
+  } else {
+    // Load without ,1
+    sprintf(execute_commands+pos,"load\"%s\",%i%c%c%c%c%crun%c%c", prg, device,0x0d,0x0d,0x0d,0x0d,0x0d,0x0d,0);
+  }
+
+  // put CRs in keyboard buffer staging area
+  for(x=0;x<numberenter;x++)
+  {
+    execute_keys[x] = 0x0d;
+  }
+  execute_keys[x]=0;
+    
+  // exit DraCopy, which will execute the BASIC LOAD above
+  bankout();
 }
 
 /**

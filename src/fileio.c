@@ -81,8 +81,8 @@ void CheckStatus(char* message) {
 }
 
 void FreeSlotMemory() {
-  free((void*)slotaddress_start); 
-  slotaddress_start=0;
+  free(FirstSlot); 
+  FirstSlot=0;
 }
 
 void std_write(char * filename,unsigned char verbose)
@@ -94,15 +94,18 @@ void std_write(char * filename,unsigned char verbose)
 
     // Save slots via UCI, one slot at a time due to 512 byte limit
     uii_open_file(0x06,filename);
+
+    Slot = FirstSlot;
     
     for(x=0; x<18; ++x)
     {
       if(verbose) {
         gotoxy(0,8);
-        cprintf("Writing slot %2d ",x+1);
+        cprintf("Writing slot %2d  ",x+1,Slot);
       }
-      uii_write_file((void*)(slotaddress_start + (x*sizeof(Slot))),sizeof(Slot));
+      uii_write_file((unsigned char*)Slot,SLOTSIZE);
       CheckStatus("writing slots");
+      Slot++;
     }
 
     uii_close_file();
@@ -114,16 +117,20 @@ void std_read(char * filename,unsigned char verbose)
     // Input: file_name is the name of the config file
 
     unsigned char x;
+    char* readaddress;
 
     // Allocate slots memory
-    if(slotaddress_start) { FreeSlotMemory(); }
-    slotaddress_start = (unsigned int) calloc(18,sizeof(Slot));
+    if(FirstSlot) { FreeSlotMemory(); }
+    FirstSlot = calloc(19,SLOTSIZE);
 
     // Abort if insufficient memory
-    if(!slotaddress_start) {
+    if(!FirstSlot) {
         printf("\n\rOut of memory.\n\r");
         errorexit();
     }
+
+    Slot = FirstSlot;
+    readaddress = (char*)FirstSlot;
 
     uii_open_file(0x01,filename);
 
@@ -136,45 +143,48 @@ void std_read(char * filename,unsigned char verbose)
               gotoxy(0,8);
               cprintf("Creating slot %2d",x+1);
             }
-            strcpy(Slot.menu,"");
-            strcpy(Slot.path,"");
-            strcpy(Slot.file,"");
-            strcpy(Slot.cmd,"");
-            strcpy(Slot.reu_image,"");
-            Slot.device = 0;
-            Slot.runboot = 0;
-            Slot.command = 0;
-            Slot.cfgvs = CFGVERSION;
-            strcpy(Slot.image_a_path,"");
-            strcpy(Slot.image_a_file,"");
-            Slot.image_a_id = 0;
-            strcpy(Slot.image_b_path,"");
-            strcpy(Slot.image_b_file,"");
-            Slot.image_b_id = 0;
-            memcpy((void*)(slotaddress_start + (x*sizeof(Slot))),&Slot,sizeof(Slot));
+            sprintf(Slot->menu,"Debug %2d",x);
+            //strcpy(Slot->menu,"");
+            strcpy(Slot->path,"");
+            strcpy(Slot->file,"");
+            strcpy(Slot->cmd,"");
+            strcpy(Slot->reu_image,"");
+            Slot->device = 0;
+            Slot->runboot = 0;
+            Slot->command = 0;
+            Slot->cfgvs = CFGVERSION;
+            strcpy(Slot->image_a_path,"");
+            strcpy(Slot->image_a_file,"");
+            Slot->image_a_id = 0;
+            strcpy(Slot->image_b_path,"");
+            strcpy(Slot->image_b_file,"");
+            Slot->image_b_id = 0;
+            Slot++;
         }
         std_write(filename,1);
         uii_close_file();
         return;
     }
 
-    uii_read_file(sizeof(Slot));
-    for(x=0; x<18; ++x)
-    {
+    uii_read_file(SLOTSIZE*18);
+
+    while (uii_isdataavailable()) {
       if(verbose) {
-        gotoxy(0,8);
-        cprintf("Reading slot %2d",x+1);
+        gotoxy(0,9);
+        cprintf("Reading slots: %4X",readaddress);
       }
-      uii_readdata();
+
+      while (uii_isdataavailable()) {
+        POKE(readaddress++,*respdatareg);       
+      }
       uii_accept();
       CheckStatus("reading slots");
-      memcpy((void*)(slotaddress_start + (x*sizeof(Slot))),&uii_data,sizeof(Slot));
     }
     
     uii_close_file();
 
-    memcpy(&Slot,(void*)slotaddress_start,sizeof(Slot));
-    if(Slot.cfgvs < CFGVERSION) {
+    Slot = FirstSlot;
+    if(Slot->cfgvs < CFGVERSION) {
       printf("\n\rOld configuration file format.");
       printf("\n\rRun upgrade tool first.");
       printf("\n\rPress key to exit.\n\r");
@@ -190,66 +200,27 @@ void writeconfigfile(char* filename)
   unsigned char x;
 
   // Clear buffer memory
-  memset(utilbuffer,0,328);
+  memset(utilbuffer,0,sizeof(utilbuffer));
 
 	// Place all variables in buffer memory
-  for(x=0;x<60;x++)
-  {
-    utilbuffer[x]=reufilepath[x];
-  }
+  utilbuffer[0] = CFGVERSION;
+  utilbuffer[1] = timeonflag;
+  utilbuffer[2] = (secondsfromutc & 0xFF000000) >> 24;
+  utilbuffer[3] = (secondsfromutc & 0xFF0000) >> 16;
+  utilbuffer[4] = (secondsfromutc & 0xFF00) >> 8;
+  utilbuffer[5] = secondsfromutc & 0xFF;
 
-  for(x=0;x<20;x++)
-  {
-    utilbuffer[x+60]=imagename[x];
-  }
-  for(x=0;x<60;x++)
-  {
-    utilbuffer[x+80]=imageapath[x];
-  }
-  for(x=0;x<20;x++)
-  {
-    utilbuffer[x+140]=imageaname[x];
-  }
-  for(x=0;x<60;x++)
-  {
-    utilbuffer[x+160]=imagebpath[x];
-  }
-  for(x=0;x<20;x++)
-  {
-    utilbuffer[x+220]=imagebname[x];
-  }
-  utilbuffer[240] = reusize;
-  utilbuffer[241] = timeonflag;
-
-  utilbuffer[242] = (secondsfromutc & 0xFF000000) >> 24;
-  utilbuffer[243] = (secondsfromutc & 0xFF0000) >> 16;
-  utilbuffer[244] = (secondsfromutc & 0xFF00) >> 8;
-  utilbuffer[245] = secondsfromutc & 0xFF;
-
-  utilbuffer[246] = imageaid;
-  utilbuffer[247] = imagebid;
   for(x=0;x<80;x++)
   {
-    utilbuffer[248+x] = host[x];
+    utilbuffer[6+x] = host[x];
   }
   
   // Delete old config file as I can not (yet) get overwrite to work
 	uii_delete_file(filename);
-  // Uncomment for debbug
-  //printf("\nStatus: %s", uii_status);
-
 	uii_open_file(0x06,filename);
-  // Uncomment for debbug
-  //printf("\nStatus: %s", uii_status);
-
-	uii_write_file(utilbuffer,328);
+	uii_write_file(utilbuffer,sizeof(utilbuffer));
   CheckStatus("writing config");
-  // Uncomment for debbug
-  //printf("\nStatus: %s", uii_status);
-
 	uii_close_file();
-  // Uncomment for debbug
-  //printf("\nStatus: %s", uii_status);
 }
 
 void readconfigfile(char* filename)
@@ -260,8 +231,6 @@ void readconfigfile(char* filename)
   unsigned char x;
 
 	uii_open_file(0x01,filename);
-  // Uncomment for debbug
-  //printf("\nStatus: %s", uii_status);
 
   // Write a config file with default values if no file is found
   if(strcmp((const char*)uii_status,"00,ok") != 0)
@@ -271,75 +240,24 @@ void readconfigfile(char* filename)
     return;
   }
 
-	uii_read_file(328);
+	uii_read_file(sizeof(utilbuffer));
   CheckStatus("reading config");
-  // Uncomment for debbug
-  //printf("\nStatus: %s", uii_status);
-
 	uii_readdata();
-  // Uncomment for debbug
-  //printf("\nStatus: %s", uii_status);
-
 	uii_accept();
-  // Uncomment for debbug
-  //printf("\nStatus: %s", uii_status);
+
 
   // Read variables from read data
-  for(x=0;x<60;x++)
-  {
-    reufilepath[x]=uii_data[x];
-  }
-  for(x=0;x<20;x++)
-  {
-    imagename[x]=uii_data[x+60];
-  }
-  for(x=0;x<60;x++)
-  {
-    imageapath[x]=uii_data[x+80];
-  }
-  for(x=0;x<20;x++)
-  {
-    imageaname[x]=uii_data[x+140];
-  }
-  for(x=0;x<60;x++)
-  {
-    imagebpath[x]=uii_data[x+160];
-  }
-  for(x=0;x<20;x++)
-  {
-    imagebname[x]=uii_data[x+220];
-  }
+  timeonflag = uii_data[1];
   
-  reusize = uii_data[240];
-
-  timeonflag = uii_data[241];
-  
-  secondsfromutc = uii_data[245] | (((unsigned long)uii_data[244])<<8)| (((unsigned long)uii_data[243])<<16)| (((unsigned long)uii_data[242])<<24);
-
-  imageaid = uii_data[246];
-  imagebid = uii_data[247];
+  secondsfromutc = uii_data[5] | (((unsigned long)uii_data[4])<<8)| (((unsigned long)uii_data[3])<<16)| (((unsigned long)uii_data[2])<<24);
 
   for(x=0;x<80;x++)
   {
-    host[x] = uii_data[248+x];
+    host[x] = uii_data[6+x];
   }
 
   // If no hostname is read due to old config file format, set default
   if(strlen(host)==0) { strcpy(host,"pool.ntp.org"); }
 
 	uii_close_file();
-  // Uncomment for debbug
-  //printf("\nStatus: %s", uii_status);
-	
-  // Debug messages. Uncomment for debug mode
-  //printf("\nREU file path+name: %s%s", reufilepath, imagename);
-  //printf("\nImage a ID: %i",imageaid);
-  //printf("\nImage b ID: %i",imagebid);
-  //printf("\nImage a path+name: %s%s", imageapath, imageaname);
-  //printf("\nImage b path+name: %s%s", imagebpath, imagebname);
-  //printf("\nREU size: %i", reusize);
-  //printf("\nTime on flag: %i", timeonflag);
-  //printf("\nConverted UTC offset: %ld",secondsfromutc);
-  //printf("\nNTP Hostname: %s",host);
-  //cgetc();
 }

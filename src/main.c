@@ -88,23 +88,23 @@ BYTE pathdevice;
 BYTE pathrunboot;
 BYTE depth = 0;
 BYTE trace = 0;
-BYTE forceeight = 0;
-BYTE fastflag = 0;
+BYTE comma1 = 1;
 BYTE commandflag = 0;
 BYTE reuflag = 0;
 BYTE addmountflag = 0;
 BYTE runmountflag = 0;
 BYTE mountflag = 0;
 
-struct SlotStruct Slot;
+struct SlotStruct* Slot;
+struct SlotStruct* FirstSlot;
+struct SlotStruct BufferSlot;
 char newmenuname[18][21];
 unsigned int newmenuoldslot[18];
-BYTE bootdevice;
 long secondsfromutc = 7200; 
 unsigned char timeonflag = 1;
 char host[80] = "pool.ntp.org";
-char imagename[20] = "default.reu";
-char reufilepath[60] = "/usb*/";
+char imagename[20];
+char reufilepath[60];
 char imageaname[20] = "";
 char imageapath[60] = "";
 unsigned char imageaid = 0;
@@ -113,14 +113,13 @@ char imagebpath[60] = "";
 unsigned char imagebid = 0;
 unsigned char reusize = 2;
 char* reusizelist[8] = { "128 KB","256 KB","512 KB","1 MB","2 MB","4 MB","8 MB","16 MB"};
-unsigned char utilbuffer[328];
+unsigned char utilbuffer[86];
 char configfilename[11] = "dmbcfg.cfg";
-unsigned int dm_apiversion = 0;
 unsigned char configversion = CFGVERSION;
-unsigned int slotaddress_start = 0;
 unsigned char menuselect;
 unsigned char fb_selection_made = 0;
 unsigned char fb_uci_mode;
+unsigned char inside_mount;
 
 // Get NTP time functions
 unsigned char CheckStatusTime()
@@ -288,119 +287,6 @@ void time_main()
 }
 
 // Menu slot functions
-//void pickmenuslot()
-//{
-//    // Routine to pick a slot to store the chosen dir trace path
-//    
-//    int menuslot;
-//    char key,devid,plusmin;
-//    BYTE yesno;
-//    BYTE selected = 0;
-//    char deviceidbuffer[3];
-//    char* ptrend;
-//    
-//    clrscr();
-//    headertext("Choose menuslot for chosen start option.");
-//    presentmenuslots();
-//    gotoxy(0,21);
-//    cputs("Choose slot by pressing key: ");
-//    do
-//    {
-//        key = cgetc();
-//    } while ((key<48 || key>57) && (key<65 || key>90));  
-//    menuslot = keytomenuslot(key);
-//    selected = 1;
-//    getslotfromem(menuslot);
-//    cprintf("%c", key);
-//    if ( strlen(Slot.menu) != 0 )
-//    {
-//        gotoxy(0,22);
-//        cprintf("Slot not empty. Edit? Y/N ");
-//        yesno = getkey(128);
-//        cprintf("%c", yesno);
-//        if ( yesno == 78 )
-//        {
-//            selected = 0;
-//        }
-//    } else {
-//        strcpy(Slot.menu, pathfile);
-//    }
-//    if ( selected == 1)
-//    {
-//        clearArea(0,22,80,3);
-//        gotoxy(0,23);
-//        cputs("Choose name for slot:");
-//        textInput(0,24,Slot.menu,20);
-//
-//        clearArea(0,23,80,2);
-//        gotoxy(0,23);
-//        if(reuflag || addmountflag) {
-//            if(reuflag) {
-//
-//                cputs("Select REU size (+/-/ENTER):");
-//
-//                do
-//                {
-//                  gotoxy(0,24);
-//                  cprintf("REU file size: (%i) %s",Slot.reusize,reusizelist[Slot.reusize]);
-//                  do
-//                  {
-//                    plusmin = cgetc();
-//                  } while (plusmin != '+' && plusmin != '-' && plusmin != CH_ENTER);
-//                  if(plusmin == '+')
-//                  {
-//                      Slot.reusize++;
-//                      if(Slot.reusize > 7) { Slot.reusize = 0; }
-//                  }
-//                  if(plusmin == '-')
-//                  {
-//                      if(Slot.reusize == 0) { Slot.reusize = 7; }
-//                      else { Slot.reusize--; }       
-//                  }
-//                } while (plusmin != CH_ENTER);
-//                strcpy(Slot.reu_image,imagename);
-//                Slot.command = Slot.command | COMMAND_REU;
-//            } else {
-//                sprintf(deviceidbuffer,"%d",addmountflag==1?Slot.image_a_id:Slot.image_b_id);
-//                cputs("Enter drive ID:       ");
-//                textInput(0,24,deviceidbuffer,2);
-//                devid = (unsigned char)strtol(deviceidbuffer,&ptrend,10);
-//                if(addmountflag==1) {
-//                    strcpy(Slot.image_a_path, pathconcat());
-//                    strcpy(Slot.image_a_file,imageaname);
-//                    Slot.image_a_id = devid;
-//                    Slot.command = Slot.command | COMMAND_IMGA;
-//                } else {
-//                    strcpy(Slot.image_b_path, pathconcat());
-//                    strcpy(Slot.image_b_file,imagebname);
-//                    Slot.image_b_id = devid;
-//                    Slot.command = Slot.command | COMMAND_IMGB;
-//                }
-//            }
-//        } else {
-//            Slot.device = pathdevice;
-//            strcpy(Slot.file, pathfile);
-//            if(runmountflag) {
-//                strcpy(Slot.path, "");
-//            } else {
-//                strcpy(Slot.path, pathconcat());
-//            }
-//            Slot.runboot = pathrunboot;
-//
-//            if ( devicetype[pathdevice] != U64 && forceeight)
-//            {
-//                Slot.runboot = pathrunboot - EXEC_FRC8;
-//            }
-//        }
-//
-//        putslottoem(menuslot);
-//
-//        gotoxy(0,24);
-//        cputs("Saving. Please wait.          ");
-//        std_write("dmbootconf");
-//    }
-//}
-
 char menuslotkey(int slotnumber)
 {
     // Routine to convert numerical slotnumber to key in menu
@@ -433,6 +319,167 @@ int keytomenuslot(char keypress)
     }
 }
 
+void presentmenuslots()
+{
+    // Routine to show the present menu slots
+    
+    int x;
+
+    Slot = FirstSlot;
+
+    for ( x=0 ; x<18 ; ++x )
+    {
+        gotoxy(0,x+3);
+
+        revers(1);
+        textcolor(DMB_COLOR_SELECT);
+        cprintf(" %2c ",menuslotkey(x));
+        revers(0);
+        textcolor(DC_COLOR_TEXT);
+        if ( strlen(Slot->menu) == 0 )
+        {
+            cputs(" <EMPTY>");
+        }
+        else
+        {
+            cprintf(" %s",Slot->menu);
+        }
+
+        Slot++;
+    }
+}
+
+void pickmenuslot()
+{
+    // Routine to pick a slot to store the chosen dir trace path
+    
+    unsigned char menuslot;
+    unsigned char key,devid,plusmin,pos;
+    BYTE yesno;
+    BYTE selected = 0;
+    char deviceidbuffer[3];
+    char* ptrend;
+    
+    clrscr();
+    headertext("Choose menuslot for chosen start option.");
+    presentmenuslots();
+    gotoxy(0,21);
+    cputs("Choose slot by pressing key: ");
+    do
+    {
+        key = cgetc();
+    } while ((key<48 || key>57) && (key<65 || key>90));  
+    menuslot = keytomenuslot(key);
+    selected = 1;
+    Slot = FirstSlot + menuslot;
+    cprintf("%c", key);
+    if ( strlen(Slot->menu) != 0 )
+    {
+        gotoxy(0,22);
+        cprintf("Slot not empty. Edit? Y/N ");
+        yesno = getkey(128);
+        cprintf("%c", yesno);
+        if ( yesno == 78 )
+        {
+            selected = 0;
+        }
+    } else {
+        StringSafeCopy(Slot->menu, pathfile,20);
+    }
+    if ( selected == 1)
+    {
+        clearArea(0,22,80,3);
+        gotoxy(0,23);
+        cputs("Choose name for slot:");
+        textInput(0,24,Slot->menu,20);
+
+        clearArea(0,23,80,2);
+        gotoxy(0,23);
+        if(reuflag || addmountflag) {
+            if(reuflag) {
+
+                cputs("Select REU size (+/-/ENTER):");
+
+                do
+                {
+                  gotoxy(0,24);
+                  cprintf("REU file size: (%i) %s",Slot->reusize,reusizelist[Slot->reusize]);
+                  do
+                  {
+                    plusmin = cgetc();
+                  } while (plusmin != '+' && plusmin != '-' && plusmin != CH_ENTER);
+                  if(plusmin == '+')
+                  {
+                      Slot->reusize++;
+                      if(Slot->reusize > 7) { Slot->reusize = 0; }
+                  }
+                  if(plusmin == '-')
+                  {
+                      if(Slot->reusize == 0) { Slot->reusize = 7; }
+                      else { Slot->reusize--; }       
+                  }
+                } while (plusmin != CH_ENTER);
+                StringSafeCopy(Slot->reu_image,imagename,19);
+                Slot->command = Slot->command | COMMAND_REU;
+            } else {
+                sprintf(deviceidbuffer,"%d",addmountflag==1?Slot->image_a_id:Slot->image_b_id);
+                cputs("Enter drive ID:       ");
+                textInput(0,24,deviceidbuffer,2);
+                devid = (unsigned char)strtol(deviceidbuffer,&ptrend,10);
+                if(addmountflag==1) {
+                    StringSafeCopy(Slot->image_a_path, pathconcat(),99);
+                    StringSafeCopy(Slot->image_a_file,imageaname,19);
+                    Slot->image_a_id = devid;
+                    Slot->command = Slot->command | COMMAND_IMGA;
+                } else {
+                    StringSafeCopy(Slot->image_b_path, pathconcat(),99);
+                    StringSafeCopy(Slot->image_b_file,imagebname,19);
+                    Slot->image_b_id = devid;
+                    Slot->command = Slot->command | COMMAND_IMGB;
+                }
+            }
+        } else {
+            if(fb_uci_mode) {
+                // UCI: Ask device ID for image A
+                sprintf(deviceidbuffer,"%d",Slot->image_a_id);
+                cputs("Enter drive ID:       ");
+                textInput(0,24,deviceidbuffer,2);
+                Slot->device = (unsigned char)strtol(deviceidbuffer,&ptrend,10);
+
+                // UCI: Split path in path to image and image name
+                StringSafeCopy(Slot->image_a_path, pathconcat(),99);
+                pos=strlen(Slot->path);
+
+                // Search for last / from behind in path
+                do
+                {
+                    pos--;
+                } while (Slot->path[pos] != '/');
+                pos++;
+
+                // Derive image filename
+                StringSafeCopy(Slot->image_a_file,Slot->image_a_path+pos,19);
+
+                // Truncate image path
+                Slot->image_a_path[pos]=0;              
+            } else {
+                Slot->device = pathdevice;
+            }
+            StringSafeCopy(Slot->file, pathfile,19);
+            if(runmountflag || fb_uci_mode) {
+                strcpy(Slot->path, "");
+            } else {
+                StringSafeCopy(Slot->path, pathconcat(),99);
+            }
+            Slot->runboot = pathrunboot;   
+        }
+
+        gotoxy(0,24);
+        cputs("Saving. Please wait.          ");
+        std_write("dmbootconf",0);
+    }
+}
+
 void mainmenu()
 {
     // Draw main boot menu
@@ -445,19 +492,21 @@ void mainmenu()
     clrscr();
     headertext("Welcome to your Commodore 64.");
 
+    Slot = FirstSlot;
+
     for ( x=0 ; x<18 ; ++x )
     {
         gotoxy(0,x+3);
-        memcpy(&Slot,(void*)(slotaddress_start + (x*sizeof(Slot))),sizeof(Slot));
-        if ( strlen(Slot.menu) != 0 )
+        if ( strlen(Slot->menu) != 0 )
         {
             revers(1);
             textcolor(DMB_COLOR_SELECT);
             cprintf(" %2c ",menuslotkey(x));
             revers(0);
             textcolor(DC_COLOR_TEXT);
-            cprintf(" %s",Slot.menu);
+            cprintf(" %s",Slot->menu);
         }
+        Slot++;
     }
 
     gotoxy(0,21);
@@ -515,8 +564,8 @@ void mainmenu()
         {
             if((key>47 && key<58) || (key>64 && key<91))    // If keys 0 - 9 or a - z
             {
-                memcpy(&Slot,(void*)(slotaddress_start + (keytomenuslot(key)*sizeof(Slot))),sizeof(Slot));
-                if(strlen(Slot.menu) != 0)   // Check if menslot is empty
+                Slot = FirstSlot + keytomenuslot(key);
+                if(strlen(Slot->menu) != 0)   // Check if menslot is empty
                 {
                     select = 1;
                 }
@@ -540,30 +589,30 @@ void mainmenu()
 //
 //    clrscr();
 //    gotoxy(0,0);
-//    if(Slot.command & COMMAND_IMGA) {
-//        cprintf("%s on ID %d.\n\r",Slot.image_a_file,Slot.image_a_id);
-//        mountimage(Slot.image_a_id,Slot.image_a_path,Slot.image_a_file);
+//    if(Slot->command & COMMAND_IMGA) {
+//        cprintf("%s on ID %d.\n\r",Slot->image_a_file,Slot->image_a_id);
+//        mountimage(Slot->image_a_id,Slot->image_a_path,Slot->image_a_file);
 //    }
-//    if(Slot.command & COMMAND_IMGB) {
-//        cprintf("%s on ID %d.\n\r",Slot.image_b_file,Slot.image_b_id);
-//        mountimage(Slot.image_b_id,Slot.image_b_path,Slot.image_b_file);
+//    if(Slot->command & COMMAND_IMGB) {
+//        cprintf("%s on ID %d.\n\r",Slot->image_b_file,Slot->image_b_id);
+//        mountimage(Slot->image_b_id,Slot->image_b_path,Slot->image_b_file);
 //    }
-//    if(Slot.command & COMMAND_REU) {
-//        cprintf("REU file %s",Slot.reu_image);
-//        uii_change_dir(Slot.image_a_path);
-//        uii_open_file(1, Slot.reu_image);
-//        uii_load_reu(Slot.reusize);
+//    if(Slot->command & COMMAND_REU) {
+//        cprintf("REU file %s",Slot->reu_image);
+//        uii_change_dir(Slot->image_a_path);
+//        uii_open_file(1, Slot->reu_image);
+//        uii_load_reu(Slot->reusize);
 //        uii_close_file();
 //    }
 //
 //    // Enter correct directory path on correct device number
-//    if(Slot.runboot & EXEC_MOUNT) {
+//    if(Slot->runboot & EXEC_MOUNT) {
 //        // Run from mounted disk
-//        execute(Slot.file,Slot.image_a_id,Slot.runboot,Slot.cmd);
+//        execute(Slot->file,Slot->image_a_id,Slot->runboot,Slot->cmd);
 //    } else {
 //        // Run from hyperspeed filesystem
-//        cmd(Slot.device,Slot.path);
-//        execute(Slot.file,Slot.device,Slot.runboot,Slot.cmd);
+//        cmd(Slot->device,Slot->path);
+//        execute(Slot->file,Slot->device,Slot->runboot,Slot->cmd);
 //    }
 //}
 //
@@ -743,45 +792,6 @@ void mainmenu()
 //    } 
 //}
 //
-//void presentmenuslots()
-//{
-//    // Routine to show the present menu slots
-//    
-//    int x;
-//
-//    for ( x=0 ; x<36 ; ++x )
-//    {
-//        if (SCREENW==40 && x>14)
-//        {
-//            break;
-//        }
-//        if (x>17)
-//        {
-//            gotoxy(40,x-15);
-//        }
-//        else
-//        {
-//            gotoxy(0,x+3);
-//        }
-//
-//        getslotfromem(x);
-//
-//        revers(1);
-//        textcolor(DMB_COLOR_SELECT);
-//        cprintf(" %2c ",menuslotkey(x));
-//        revers(0);
-//        textcolor(DC_COLOR_TEXT);
-//        if ( strlen(Slot.menu) == 0 )
-//        {
-//            cputs(" <EMPTY>");
-//        }
-//        else
-//        {
-//            cprintf(" %s",Slot.menu);
-//        }
-//    }
-//}
-//
 //int deletemenuslot()
 //{
 //    // Routine to delete a chosen menu slot
@@ -816,7 +826,7 @@ void mainmenu()
 //    getslotfromem(menuslot);
 //
 //    cprintf("%c\n\r", key);
-//    if ( strlen(Slot.menu) != 0 )
+//    if ( strlen(Slot->menu) != 0 )
 //    {
 //        cprintf("Are you sure? Y/N ");
 //        yesno = getkey(128);
@@ -880,7 +890,7 @@ void mainmenu()
 //    getslotfromem(menuslot);
 //    
 //    cprintf("%c\n\r", key);
-//    if ( strlen(Slot.menu) != 0 )
+//    if ( strlen(Slot->menu) != 0 )
 //    {
 //        cprintf("Are you sure? Y/N ");
 //        yesno = getkey(128);
@@ -900,7 +910,7 @@ void mainmenu()
 //    {
 //        gotoxy(0,23);
 //        cputs("Choose name for slot:");
-//        textInput(0,24,Slot.menu,20);
+//        textInput(0,24,Slot->menu,20);
 //        putslottoem(menuslot);
 //        changesmade = 1;
 //    }
@@ -953,7 +963,7 @@ void mainmenu()
 //                if ((key>47 && key<58) || (key>64 && key<91))   // If keys 0-9,a-z
 //                {
 //                    getslotfromem(keytomenuslot(key));
-//                    if(strlen(Slot.menu) != 0)   // Check if menslot is empty
+//                    if(strlen(Slot->menu) != 0)   // Check if menslot is empty
 //                    {
 //                        select = 1;
 //                    }
@@ -981,7 +991,7 @@ void mainmenu()
 //            textcolor(DC_COLOR_HIGHLIGHT);
 //            cprintf(" %2c ",menuslotkey(menuslot));
 //            revers(0);
-//            cprintf(" %s",Slot.menu);
+//            cprintf(" %s",Slot->menu);
 //            gotoxy(0,22);
 //            textcolor(DC_COLOR_TEXT);
 //            cputs("Move slot up or down by ");
@@ -999,7 +1009,7 @@ void mainmenu()
 //            {
 //                getslotfromem(x);
 //                putslottoem(x+40);
-//                strcpy(newmenuname[x],Slot.menu);
+//                strcpy(newmenuname[x],Slot->menu);
 //                newmenuoldslot[x] = x;
 //            }
 //
@@ -1087,7 +1097,7 @@ void mainmenu()
 //                for (x=0;x<36;x++)
 //                {
 //                    getslotfromem(newmenuoldslot[x]);
-//                    strcpy(Slot.menu,newmenuname[x]);
+//                    strcpy(Slot->menu,newmenuname[x]);
 //                    putslottoem(x+40);
 //                }
 //                for (x=0;x<36;x++)
@@ -1154,140 +1164,6 @@ void mainmenu()
 //    }
 //}
 //
-//void getslotfromem(int slotnumber)
-//{
-//    // Routine to read a menu option from extended memory page
-//    // Input: Slotnumber 0-36 (or 40-76 for backup)
-//
-//    char* page;
-//    unsigned char pagenr = slotnumber * 2;
-//
-//    // Calculate page address from slotnumber 
-//    page = em_map(pagenr);
-//
-//    // Copy data from first page
-//    strcpy(Slot.path, page);
-//    page += 100;
-//    strcpy(Slot.menu, page);
-//    page += 21;
-//    strcpy(Slot.file, page);
-//    page += 20;
-//    strcpy(Slot.cmd, page);
-//    page += 80;
-//    strcpy(Slot.reu_image, page);
-//    page += 20;
-//    Slot.reusize = *page;
-//    page++;
-//    Slot.runboot = *page;
-//    page++;
-//    Slot.device = *page;
-//    page++;
-//    Slot.command  = *page;
-//    page++;
-//    Slot.cfgvs  = *page;
-//
-//    // Copy data from second page
-//    pagenr++;
-//    page = em_map(pagenr);
-//    strcpy(Slot.image_a_path, page);
-//    page += 100;
-//    strcpy(Slot.image_a_file, page);
-//    page += 20;
-//    Slot.image_a_id = *page;
-//    page++;
-//    strcpy(Slot.image_b_path, page);
-//    page += 100;
-//    strcpy(Slot.image_b_file, page);
-//    page += 20;
-//    Slot.image_b_id = *page;
-//}
-//
-//void putslottoem(int slotnumber)
-//{
-//    // Routine to write a menu option to extended memory page
-//    // Input: Slotnumber 0-36 (or 40-76 for backup)
-//    char* page;
-//    unsigned char pagenr = slotnumber * 2;
-//
-//    // Point at first page and erase page
-//    page = em_use(pagenr);
-//    memset(page,0,256);
-//
-//    // Store data in first page
-//    strcpy(page, Slot.path);
-//    page += 100;
-//    strcpy(page, Slot.menu);
-//    page += 21;
-//    strcpy(page, Slot.file);
-//    page += 20;
-//    strcpy(page, Slot.cmd);
-//    page += 80;
-//    strcpy(page, Slot.reu_image);
-//    page += 20;
-//    *page = Slot.reusize;
-//    page++;
-//    *page = Slot.runboot;
-//    page++;
-//    *page = Slot.device;
-//    page++;
-//    *page = Slot.command;
-//    page++;
-//    *page = Slot.cfgvs;  
-//    em_commit();
-//
-//    // Point at first page and erase page
-//    pagenr++;
-//    page = em_use(pagenr);
-//    memset(page,0,256);
-//
-//    // Store data in second page
-//    page = em_use(pagenr);
-//    strcpy(page, Slot.image_a_path);
-//    page += 100;
-//    strcpy(page, Slot.image_a_file);
-//    page += 20;
-//    *page = Slot.image_a_id;
-//    page++;
-//    strcpy(page, Slot.image_b_path);
-//    page += 100;
-//    strcpy(page, Slot.image_b_file);
-//    page += 20;
-//    *page = Slot.image_b_id;
-//    em_commit();
-//}
-//
-//char menuslotkey(int slotnumber)
-//{
-//    // Routine to convert numerical slotnumber to key in menu
-//    // Input: Slotnumber = menu slot number
-//    // Output: Corresponding 0-9, a-z key
-//
-//    if(slotnumber<10)
-//    {
-//        return slotnumber+48; // Numbers 0-9
-//    }
-//    else
-//    {
-//        return slotnumber+87; // Letters a-z
-//    }
-//}
-//
-//int keytomenuslot(char keypress)
-//{
-//    // Routine to convert keypress to numerical slotnumber
-//    // Input: keypress = ASCII value of key pressed 0-9 or a-z
-//    // Output: Corresponding menuslotnumber
-//
-//    if(keypress>64)
-//    {
-//        return keypress - 55;
-//    }
-//    else
-//    {
-//        return keypress - 48;
-//    }
-//}
-//
 //int edituserdefinedcommand()
 //{
 //    // Routine to edit user defined command in menuslot
@@ -1319,7 +1195,7 @@ void mainmenu()
 //    getslotfromem(menuslot);
 //    
 //    cprintf("%c\n\r", key);
-//    if ( strlen(Slot.menu) == 0 )
+//    if ( strlen(Slot->menu) == 0 )
 //    {
 //        cprintf("Slot is empty. Press key.");
 //        getkey(2);
@@ -1337,17 +1213,17 @@ void mainmenu()
 //        cprintf(" %c ",menuslotkey(menuslot));
 //        revers(0);
 //        textcolor(DC_COLOR_TEXT);
-//        cprintf(" %s",Slot.menu);
+//        cprintf(" %s",Slot->menu);
 //
 //        cputsxy(0,6,"Enter command (empty=none):");
-//        textInput(0,7,Slot.cmd,79);
-//        if( strlen(Slot.cmd) == 0)
+//        textInput(0,7,Slot->cmd,79);
+//        if( strlen(Slot->cmd) == 0)
 //        {
-//            Slot.command = 0;
+//            Slot->command = 0;
 //        }
 //        else
 //        {
-//            Slot.command = 1;
+//            Slot->command = 1;
 //        }
 //        
 //        putslottoem(menuslot);
@@ -1383,6 +1259,105 @@ void information()
     getkey(2);    
 }
 
+// Config functions
+void edittimeconfig()
+{
+    unsigned char changesmade = 0;
+    unsigned char key;
+    char offsetinput[10] = "";
+    char buffer2[80] = "";
+    char* ptrend;
+
+    clrscr();
+    headertext("Configuration tool.");
+    gotoxy(0,3);
+    cputs("Present configuration settings:\n\n\r");
+    cputs("NTP time update settings:\n\r");
+    cprintf("- Update on boot toggle: %s\n\r",(timeonflag==0)?"Off":"On");
+    cprintf("- Offset to UTC in seconds: %ld\n\r",secondsfromutc);
+    mid(host,0,SCREENW,buffer2,SCREENW);
+    cprintf("- NTP server hostname:\n\r%s\n\r",buffer2);
+
+    gotoxy(0,18);
+    cputs("Make your choice:\n\r");
+
+    revers(1);
+    textcolor(DMB_COLOR_SELECT);
+    cputs(" F1 ");
+    revers(0);
+    textcolor(DC_COLOR_TEXT);
+    cputs(" Toggle update on boot on/off\n\r");
+
+    revers(1);
+    textcolor(DMB_COLOR_SELECT);
+    cputs(" F3 ");
+    revers(0);
+    textcolor(DC_COLOR_TEXT);
+    cputs(" Edit time offset to UTC\n\r");
+
+    revers(1);
+    textcolor(DMB_COLOR_SELECT);
+    cputs(" F5 ");
+    revers(0);
+    textcolor(DC_COLOR_TEXT);
+    cputs(" Edit NTP server host\n\r");
+
+    revers(1);
+    textcolor(DMB_COLOR_SELECT);
+    cputs(" F7 ");
+    revers(0);
+    textcolor(DC_COLOR_TEXT);
+    cputs(" Back to main menu\n\r");
+
+    do
+    {
+        do
+        {
+            key = cgetc();
+        } while (key != CH_F1 && key != CH_F3 && key != CH_F5 && key != CH_F7);
+
+        switch (key)
+        {
+        case CH_F1:
+            timeonflag = (timeonflag==0)? 1:0;
+            gotoxy(0,6);
+            cprintf("- Update on boot toggle: %s\n\r",(timeonflag==0)?"Off":"On ");
+            changesmade = 1;
+            break;
+
+        case CH_F3:
+            cputsxy(0,23,"Input time offset to UTC:");
+            textInput(0,24,offsetinput,10);
+            secondsfromutc = strtol(offsetinput,&ptrend,10);
+            clearArea(0,7,40,1);
+            clearArea(0,23,40,2);
+            gotoxy(0,7);
+            cprintf("- Offset to UTC in seconds: %ld\n\n\r",secondsfromutc);
+            changesmade = 1;
+            break;
+
+        case CH_F5:
+            cputsxy(0,23,"Input NTP server hostname:");
+            textInput(0,24,host,79);
+            clearArea(0,9,40,1);
+            clearArea(0,23,40,2);
+            gotoxy(0,9);
+            mid(host,0,SCREENW,buffer2,SCREENW);
+            cprintf("%s",buffer2);
+            changesmade = 1;
+            break;
+
+        default:
+	    	break;
+        }
+    } while (key != CH_F7);
+
+    if (changesmade == 1)
+    {
+        writeconfigfile(configfilename);
+    }
+}
+
 //Main program
 void main() {
 
@@ -1410,8 +1385,8 @@ void main() {
         time_main();
     } else {
         // Restore slots in memory returning from filebrowser
-        std_read("dmbslt.cfg",0);
-        //pickmenuslot();
+        std_read("dmbslt.cfg",1);
+        if(fb_selection_made==1) { pickmenuslot(); }
     }
 
     // Init screen and menu
@@ -1434,11 +1409,11 @@ void main() {
             FreeSlotMemory(); // Free slot memory to make room for dir
             bankrun(1);  // Jump to bank of filebrowser and start entry point
             break;
-    //    
-    //    case CH_F4:
-    //        config_main();
-    //        break;
-//
+        
+        case CH_F4:
+            edittimeconfig();
+            break;
+
         case CH_F2:
             // Information and credits
             information();
@@ -1454,7 +1429,6 @@ void main() {
         }
     } while (menuselect != CH_F3);
 
-    exitScreen();
     bankout();
 }
 

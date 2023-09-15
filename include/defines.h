@@ -25,7 +25,7 @@
 
 // Execute flag values
 #define EXEC_MOUNT              0x01
-#define EXEC_DEMOMODE           0x02
+#define EXEC_COMMA1             0x02
 
 // Config version
 #define CFGVERSION              0x01
@@ -53,14 +53,13 @@ typedef unsigned char BYTE;
 extern BYTE SCREENW;
 extern BYTE DIRW;
 extern BYTE MENUX; 
-extern unsigned int validdriveid;
-extern unsigned int idnr[30];
 extern char path[8][20];
 extern char pathfile[20];
 extern BYTE pathdevice;
 extern BYTE pathrunboot;
 extern BYTE depth;
 extern BYTE trace;
+extern BYTE comma1;
 extern BYTE commandflag;
 extern BYTE mountflag;
 extern BYTE reuflag;
@@ -84,10 +83,11 @@ extern struct SlotStruct {
     char image_b_file[20];
     BYTE image_b_id;
 };
-extern struct SlotStruct Slot;
+extern struct SlotStruct* Slot;
+extern struct SlotStruct* FirstSlot;
+extern struct SlotStruct BufferSlot;
 extern char newmenuname[18][21];
 extern unsigned int newmenuoldslot[18];
-extern BYTE bootdevice;
 extern long secondsfromutc; 
 extern unsigned char timeonflag;
 extern char host[80];
@@ -101,19 +101,23 @@ extern char imagebpath[60];
 extern unsigned char imagebid;
 extern unsigned char reusize;
 extern char* reusizelist[8];
-extern unsigned char utilbuffer[328];
+extern unsigned char utilbuffer[86];
 extern char configfilename[11];
-extern unsigned char dm_apipresent;
-extern unsigned int dm_apiversion;
 extern unsigned char configversion;
-extern unsigned int slotaddress_start;
 extern unsigned char menuselect;
 extern unsigned char fb_selection_made;
 extern unsigned char fb_uci_mode;
+extern unsigned char inside_mount;
 
-#define CH_LARROW 0x5f
-#define CH_UARROW 0x5e
-#define CH_POUND  0x5c
+// Import from cartridge back to BASIC code
+extern char execute_commands[200];
+extern char execute_keys[10];
+
+#define SLOTSIZE    488
+
+#define CH_LARROW   0x5f
+#define CH_UARROW   0x5e
+#define CH_POUND    0x5c
 
 #define BUILD_YEAR_CH0 (__DATE__[ 7])
 #define BUILD_YEAR_CH1 (__DATE__[ 8])

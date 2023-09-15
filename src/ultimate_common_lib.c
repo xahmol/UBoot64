@@ -15,7 +15,6 @@ Patches and pull requests are welcome
 #include "ultimate_common_lib.h"
 
 #pragma code-name	("BANKACCESS");
-#pragma rodata-name	("BANKACCESS");
 
 unsigned char *id_reg = (unsigned char *)ID_REG;
 unsigned char *cmddatareg = (unsigned char *)CMD_DATA_REG;

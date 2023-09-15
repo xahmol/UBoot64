@@ -100,7 +100,7 @@ char* PetToAsc( char* petscii ) {
 
     unsigned char x;
 
-    for(x=0;x<strlen(petscii);x++) {
+    for(x=0;(x<strlen(petscii) && x<100);x++) {
         linebuffer2[x] = petToAscTable[petscii[x]];
     }
     linebuffer2[x]=0;
@@ -112,7 +112,7 @@ char* AscToPet( char* ascii ) {
 
     unsigned char x;
 
-    for(x=0;x<strlen(ascii);x++) {
+    for(x=0;(x<strlen(ascii) && x<100);x++) {
         linebuffer2[x] = ascToPetTable[ascii[x]];
     }
     linebuffer2[x]=0;

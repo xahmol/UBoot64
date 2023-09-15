@@ -15,7 +15,6 @@ Patches and pull requests are welcome
 #include "ultimate_time_lib.h"
 
 #pragma code-name	("BANKACCESS");
-#pragma rodata-name	("BANKACCESS");
 
 void uii_get_time(void) 
 {

@@ -28,5 +28,12 @@ void uii_write_file(unsigned char* data, int length);
 void uii_read_file(unsigned char length);
 void uii_delete_file(char* filename);
 void uii_load_reu(unsigned char size);
+void uii_get_deviceinfo(void);
+void uii_enable_drive_a(void);
+void uii_disable_drive_a(void);
+void uii_enable_drive_b(void);
+void uii_disable_drive_b(void);
+void uii_get_drive_a_power(void);
+void uii_get_drive_b_power(void);
 
 #endif

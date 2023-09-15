@@ -4,7 +4,7 @@
 ;
 ;------------------------------------------------------------------------------
 
-.export		_bankrun, _bankout
+.export		_bankrun, _bankout, _execute_commands, _execute_keys
 .import		_codetable, _exit, donelib
 
 .importzp	tmp1, ptr1, ptr2, regbank, sp
@@ -85,7 +85,11 @@ init_loop1:
 	ldx #$FB
 	txs
 
-;	; Print commands to execute
+	; Clear keyboard buffer
+	lda #$00
+	sta KEY_COUNT
+
+	; Print commands to execute
 	sec
     jsr PLOT
     txa
@@ -94,7 +98,7 @@ init_loop1:
     pha
     ldx #$00
 exec_loop1:       
-	lda execute_commands,x
+	lda _execute_commands,x
     beq exec_next1
     jsr CHROUT
     inx
@@ -103,7 +107,7 @@ exec_loop1:
 exec_next1:
 	ldx #$00
 exec_loop2:        
-	lda execute_keys,x
+	lda _execute_keys,x
     beq exec_next2
     sta KBDBUFFER,x
     inc KEY_COUNT
@@ -143,12 +147,12 @@ _bankrun:
 	txs
 	jmp	(ptr1)
 
-execute_commands:
+_execute_commands:
 ; Buffer for boot execute commands: 200 bytes, zero terminated
 	.byte $00
 	.res 199
 
-execute_keys:
+_execute_keys:
 ; Buffer for boot execute enter keys: 10 bytes, zero terminated
 	.byte $00
 	.res 9
