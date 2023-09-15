@@ -189,12 +189,12 @@ void mainmenu()
     cputs(" F3 ");
     revers(0);
     textcolor(DC_COLOR_TEXT);
-    cputs(" Quit to BASIC");
+    cputs(" Edit/Order/Del");
     
     gotoxy(20,22);
     revers(1);
     textcolor(DMB_COLOR_SELECT);
-    cputs(" F4 ");
+    cputs(" F5 ");
     revers(0);
     textcolor(DC_COLOR_TEXT);
     cputs(" NTP time config");
@@ -205,7 +205,7 @@ void mainmenu()
     cputs(" F7 ");
     revers(0);
     textcolor(DC_COLOR_TEXT);
-    cputs(" Edit/Reorder/Delete menu");
+    cputs(" Quit to BASIC");
 
     cputsxy(0,24,"Make your choice.");
 
@@ -214,7 +214,7 @@ void mainmenu()
     do
     {
         key = cgetc();
-        if (key == CH_F1 || key == CH_F2 || key == CH_F3 || key == CH_F4 || key == CH_F5 || key == CH_F6 || key == CH_F7)
+        if (key == CH_F1 || key == CH_F2 || key == CH_F3 || key == CH_F5 || key == CH_F7)
         {
             select = 1;
         }

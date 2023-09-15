@@ -174,25 +174,25 @@ void main() {
             FreeSlotMemory(); // Free slot memory to make room for dir
             bankrun(1);  // Jump to bank of filebrowser and start entry point
             break;
-        
-        case CH_F4:
-            edittimeconfig();
-            break;
 
         case CH_F2:
             // Information and credits
             information();
             break;
         
-        case CH_F7:
+        case CH_F3:
             // Edit / re-order and delete menuslots
             editmenuoptions();
+            break;
+                
+        case CH_F5:
+            edittimeconfig();
             break;
         
         default:
             break;
         }
-    } while (menuselect != CH_F3);
+    } while (menuselect != CH_F7);
 
     bankout();
 }
