@@ -18,10 +18,13 @@
 	.import		__RODATA_LOAD__, __RODATA_RUN__, __RODATA_SIZE__
 	.import		__DATA_LOAD__, __DATA_RUN__, __DATA_SIZE__
 	.import		__BANKACCESS_LOAD__, __BANKACCESS_RUN__, __BANKACCESS_SIZE__
+	.import		__LOGO_LOAD__, __LOGO_RUN__, __LOGO_SIZE__
+
 
     .include        "zeropage.inc"
 	.include     	"c64.inc"
 
+	SPRITE_POINT	= $07F8
 
 .segment	"HEADERDATA"
 
@@ -172,6 +175,36 @@ init_loop1:
 	lda #$07							; Load value for yellow
 	sta CHARCOLOR						; Store as foreground color
 
+; Copy sprite
+	lda	#<__LOGO_LOAD__
+	sta	ptr1
+	lda	#>__LOGO_LOAD__
+	sta	ptr1+1
+
+	lda	#<__LOGO_RUN__
+	sta	ptr2
+	lda	#>__LOGO_RUN__
+	sta	ptr2+1
+
+	lda	#<__LOGO_SIZE__
+	sta	ptr3
+	lda	#>__LOGO_SIZE__
+	sta	ptr3+1
+	jsr	copym
+
+; Enable sprite
+	lda #$0D							; Load block 13 to point at sprite in cassette buffer
+	sta SPRITE_POINT+2					; Save pointer for sprite 2
+	lda #$04							; Sprite 2
+	sta VIC_SPR_ENA						; Enable with VIC sprite enable register
+	sta VIC_SPR_HI_X					; Set Most Significant Bit for sprite 2
+	lda #$30							; Load X coord
+	sta VIC_SPR2_X      				; Store X coord
+	lda #$32							; Load Y coord
+	sta VIC_SPR2_Y      				; Store Y coord
+	lda #$03							; Set color as yellow
+	sta VIC_SPR2_COLOR					; Set color in VIC register
+
 ; Print start message
 	ldx #$00
 msg_loop1:       
@@ -310,6 +343,12 @@ copym:
 startmessage:
 	.byt "Starting UBoot64.",$0D,$0D
 	.byt "Copying core to RAM.",$0D,$00
+
+.segment	"LOGO"
+	.byte $00,$0F,$80,$00,$10,$40,$00,$10,$40,$00,$13,$80,$00,$12,$00,$00
+	.byte $3F,$00,$40,$C0,$C0,$A3,$00,$30,$94,$00,$18,$9A,$BA,$94,$92,$A2
+	.byte $A2,$52,$BB,$A2,$22,$A8,$A1,$23,$B8,$A1,$5C,$00,$22,$93,$00,$22
+	.byte $88,$C0,$D4,$94,$3F,$18,$93,$00,$30,$A0,$C0,$C0,$40,$3F,$00,$07
 
 .segment	"LOWCODE"
 .segment	"CODE3"

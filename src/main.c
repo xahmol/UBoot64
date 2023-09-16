@@ -99,8 +99,6 @@ BYTE mountflag = 0;
 struct SlotStruct* Slot;
 struct SlotStruct* FirstSlot;
 struct SlotStruct* BufferSlot;
-char newmenuname[18][21];
-unsigned int newmenuoldslot[18];
 long secondsfromutc = 7200; 
 unsigned char timeonflag = 1;
 char host[80] = "pool.ntp.org";
@@ -153,6 +151,9 @@ void main() {
         std_read(slotfilename,1);
         if(fb_selection_made==1) { pickmenuslot(); }
     }
+
+    // Disable sprite logo
+    POKE(VIC_SPR_ENA,0);                // Disable all sprites via VIC register
 
     // Init screen and menu
     initScreen(DC_COLOR_BORDER, DC_COLOR_BG, DC_COLOR_TEXT);

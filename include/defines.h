@@ -49,6 +49,13 @@ typedef unsigned char BYTE;
 // Define highest device ID allowed
 #define MAXDEVID 30
 
+// Spite control addresses
+#define VIC_SPR2_X      0xD004
+#define VIC_SPR2_Y      0xD005
+#define VIC_SPR_HI_X    0xD010
+#define VIC_SPR_ENA     0xD015
+#define VIC_SPR2_COLOR  0xD029
+
 // Global variables
 extern BYTE SCREENW;
 extern BYTE DIRW;
@@ -86,8 +93,6 @@ extern struct SlotStruct {
 extern struct SlotStruct* Slot;
 extern struct SlotStruct* FirstSlot;
 extern struct SlotStruct* BufferSlot;
-extern char newmenuname[18][21];
-extern unsigned int newmenuoldslot[18];
 extern long secondsfromutc; 
 extern unsigned char timeonflag;
 extern char host[80];
