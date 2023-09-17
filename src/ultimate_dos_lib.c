@@ -92,6 +92,20 @@ void uii_mount_disk(unsigned char id, char *filename)
 	uii_accept();
 }
 
+void uii_unmount_disk(unsigned char id)
+{
+	unsigned char cmd[] = {0x00, DOS_CMD_UMOUNT_DISK, 0x00};
+
+	cmd[2] = id;
+
+	uii_settarget(TARGET_DOS1);
+	uii_sendcommand(cmd, 3);
+
+	uii_readdata();
+	uii_readstatus();
+	uii_accept();
+}
+
 void uii_open_file(unsigned char attrib, char *filename)
 {
 	// Attrib will be:

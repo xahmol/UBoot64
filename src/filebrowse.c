@@ -82,7 +82,6 @@ struct DirElement {
   struct cbm_dirent dirent;
   struct DirElement * next;
   struct DirElement * prev;
-  unsigned char flags;
 };
 struct DirElement direlement_size;
 struct DirElement *previous;
@@ -325,8 +324,14 @@ unsigned char UCIReadDir(struct cbm_dirent* l_dirent) {
     // Check if entry is a dir by checking if bit 4 of first byte is set
     if(uii_data[0]&0x10) { presenttype=CBM_T_DIR; }
     
-    // Copy to buffer and find out length
-    StringSafeCopy(linebuffer,AscToPet(uii_data+1),16);
+    // Copy to buffer
+    StringSafeCopy(linebuffer2,uii_data+1,16);
+
+    // Store entry in original charset
+    StringSafeCopy(l_dirent->name,linebuffer2,16);
+
+    // Convert to PETSCII
+    strcpy(linebuffer,AscToPet(linebuffer2));
     len=strlen(linebuffer);
 
     // check file type
@@ -373,7 +378,6 @@ unsigned char UCIReadDir(struct cbm_dirent* l_dirent) {
     if(!presenttype) { presenttype = CBM_T_SEQ; }
 
     // Set direntry data
-    StringSafeCopy(l_dirent->name,linebuffer,16);
     l_dirent->type = presenttype;
     l_dirent->size = 0;
     return 0;
@@ -523,54 +527,51 @@ void CheckMounttype(const char *dirname) {
   register BYTE l = strlen(dirname);
 
   mountflag = 0;
+
+  strcpy(linebuffer,(fb_uci_mode)?AscToPet((char*)dirname):dirname);
   
-  if(dirname) {
-      if (l > 4 && dirname[l-4] == '.')
+  if(linebuffer) {
+      if (l > 4 && linebuffer[l-4] == '.')
       {
-        if ((dirname[l-3] == 'd' || dirname[l-3] == 'D') &&
-            (dirname[l-2] == '6') &&
-            (dirname[l-1] == '4'))
+        if ((linebuffer[l-3] == 'd' || linebuffer[l-3] == 'D') &&
+            (linebuffer[l-2] == '6') &&
+            (linebuffer[l-1] == '4'))
           {
             mountflag = 1;
           }
-        if ((dirname[l-3] == 'g' || dirname[l-3] == 'G') &&
-          (dirname[l-2] == '6') &&
-          (dirname[l-1] == '4'))
+        if ((linebuffer[l-3] == 'g' || linebuffer[l-3] == 'G') &&
+          (linebuffer[l-2] == '6') &&
+          (linebuffer[l-1] == '4'))
         {
           mountflag = 1;
         }
-        else if ((dirname[l-3] == 'd' || dirname[l-3] == 'D') &&
-                 (dirname[l-2] == '7' || dirname[l-2] == '8') &&
-                 (dirname[l-1] == '1'))
+        else if ((linebuffer[l-3] == 'd' || linebuffer[l-3] == 'D') &&
+                 (linebuffer[l-2] == '7' || linebuffer[l-2] == '8') &&
+                 (linebuffer[l-1] == '1'))
           {
             mountflag = 1;
           }
-        else if ((dirname[l-3] == 'g' || dirname[l-3] == 'G') &&
-                 (dirname[l-2] == '7' || dirname[l-2] == '8') &&
-                 (dirname[l-1] == '1'))
+        else if ((linebuffer[l-3] == 'g' || linebuffer[l-3] == 'G') &&
+                 (linebuffer[l-2] == '7' || linebuffer[l-2] == '8') &&
+                 (linebuffer[l-1] == '1'))
           {
             mountflag = 1;
           }
-        else if ((dirname[l-3] == 'd' || dirname[l-3] == 'D') &&
-                 (dirname[l-2] == 'n' || dirname[l-2] == 'N') &&
-                 (dirname[l-1] == 'p' || dirname[l-1] == 'P') &&
+        else if ((linebuffer[l-3] == 'd' || linebuffer[l-3] == 'D') &&
+                 (linebuffer[l-2] == 'n' || linebuffer[l-2] == 'N') &&
+                 (linebuffer[l-1] == 'p' || linebuffer[l-1] == 'P') &&
                  !fb_uci_mode)
           {
             mountflag = 1;
           }
-        else if ((dirname[l-3] == 'r' || dirname[l-3] == 'R') &&
-                 (dirname[l-2] == 'e' || dirname[l-2] == 'E') &&
-                 (dirname[l-1] == 'u' || dirname[l-1] == 'U'))
+        else if ((linebuffer[l-3] == 'r' || linebuffer[l-3] == 'R') &&
+                 (linebuffer[l-2] == 'e' || linebuffer[l-2] == 'E') &&
+                 (linebuffer[l-1] == 'u' || linebuffer[l-1] == 'U'))
           {
             mountflag = 2;
           }
       }
   }
-
-  //gotoxy(26,23);
-  //cprintf("Len: %3d",l);
-  //gotoxy(26,24);
-  //cprintf("MF : %3d",mountflag);
 }
 
 void drawDirFrame()
@@ -623,6 +624,8 @@ void printElementPriv(const BYTE xpos, const BYTE ypos)
         revers(1);
     }
 
+    strcpy(linebuffer,(fb_uci_mode)?AscToPet(current->dirent.name):current->dirent.name);
+
     // if blocks are >= 10000 shorten the file type to 2 characters
     strcpy(linebuffer2, fileTypeToStr(current->dirent.type));
     if (current->dirent.size >= 10000 && strlen(current->dirent.name) == 16) {
@@ -631,19 +634,13 @@ void printElementPriv(const BYTE xpos, const BYTE ypos)
         linebuffer2[2] = 0;
     }
     if(fb_uci_mode) {
-        cprintf("%-16s %s",current->dirent.name,linebuffer2);
+        cprintf("%-16s %s",linebuffer,linebuffer2);
     } else {
         cprintf((current->dirent.size < 10000) ? "%4u %-16s %s" : "%u %-15s %s",
             current->dirent.size,
-            current->dirent.name,
+            linebuffer,
             linebuffer2);
     }
-    
-    if (current->flags!=0)
-      {
-        gotoxy(xpos,ypos);
-        cputc('>');
-      }
     textcolor(DC_COLOR_TEXT);
     revers(0);
 }
@@ -787,11 +784,21 @@ int changeDir(const BYTE device, char *dirname)
                 for(x=0;x<7;x++) { cprintf("%2X",uii_data[x]); }
                 cgetc();
 
-                uii_enable_drive_a();
+                imageaid = uii_data[2];
+                StringSafeCopy(imageaname,dirname,19);
                 clearArea(26,21,14,2);
-                cputsxy(26,21,"Power A on:");
-                cputsxy(26,22,uii_status);
+                gotoxy(26,21);
+                cprintf("ID: %d @ %4X",imageaid,&imageaid);
+                //cputsxy(26,22,imageaname);
                 cgetc();
+
+                if(!uii_data[3]) {
+                  uii_enable_drive_a();
+                  clearArea(26,21,14,2);
+                  cputsxy(26,21,"Power A on:");
+                  cputsxy(26,22,uii_status);
+                  cgetc();
+                }
 
                 uii_mount_disk(imageaid,dirname);
                 clearArea(26,21,14,2);
@@ -799,25 +806,18 @@ int changeDir(const BYTE device, char *dirname)
                 cputsxy(26,22,uii_status);
                 cgetc();
 
-                imageaid = uii_data[2];
-                StringSafeCopy(imageaname,dirname,19);
-                clearArea(26,21,14,2);
-                gotoxy(26,21);
-                cprintf("ID:",imageaid);
-                cputsxy(26,22,imageaname);
-                cgetc();
-
                 clearArea(26,21,14,2);
                 uii_get_path();
-                StringSafeCopy(imageapath,AscToPet(uii_data),99);
+                StringSafeCopy(imageapath,uii_data,99);
                 if(!uii_success()) { return 1; }
                 trace = 1;
                 inside_mount = 1;
                 fb_uci_mode = 0;
+                depth=0;
                 refreshDir();
                 updateMenu();
             } else {
-                uii_change_dir(PetToAsc(dirname));
+                uii_change_dir(dirname);
             }
         } else {
             if (mountflag==1 || (l == 1 && dirname[0]==CH_LARROW) || 
@@ -1109,15 +1109,17 @@ void mainLoopBrowse(void)
         // --- leave directory
         case CH_CURS_LEFT:
         case CH_DEL:
-          if(inside_mount && depth) {
+          if(inside_mount && !depth) {
             inside_mount = 0;
             fb_uci_mode = 1;
             trace = 0;
-            changeDir(0, "..");
+            uii_unmount_disk(imageaid);
+            imageaid = 0;
+            uii_disable_drive_a();
             refreshDir();
             updateMenu();            
           } else {
-            if (trace == 1)
+            if (trace == 1 && depth)
             {
               --depth;
             }

@@ -22,6 +22,7 @@ void uii_get_dir(void);
 void uii_change_dir(char* directory);
 void uii_change_dir_home(void);
 void uii_mount_disk(unsigned char id, char *filename);
+void uii_unmount_disk(unsigned char id);
 void uii_open_file(unsigned char attrib, char *filename);
 void uii_close_file(void);
 void uii_write_file(unsigned char* data, int length);
