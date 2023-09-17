@@ -3,7 +3,6 @@
 
 #include "defines.h"
 
-void FreeSlotMemory();
 void std_write(char * filename,unsigned char verbose);
 void std_read(char * filename,unsigned char verbose);
 void writeconfigfile(char* filename);

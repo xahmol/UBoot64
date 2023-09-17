@@ -105,16 +105,23 @@ struct Directory {
 };
 struct Directory cwd;
 
+struct DirElement* address_dir;
+unsigned int address_dir_max;
+
 void freeDir() {
 // Free memory of directory structure
-    current = cwd.firstelement;
 
-    while (current)
-    {
-      next = current->next;
-      free(current);
-      current = next;
-    }
+  address_dir = (void*)FirstSlot;
+}
+
+struct DirElement* allocDir() {
+  address_dir++;
+  if((unsigned int)address_dir+sizeof(direlement_size) > address_dir_max) {
+    return 0;
+  } else {
+    memset((void*)address_dir,0,sizeof(direlement_size));
+    return address_dir;
+  }
 }
 
 unsigned char myCbmReadDir(const BYTE device, struct cbm_dirent* l_dirent) {
@@ -312,8 +319,8 @@ unsigned char UCIReadDir(struct cbm_dirent* l_dirent) {
     presenttype = 0;
 
     // Get next dir entry
-	uii_readdata();
-	uii_accept();
+	  uii_readdata();
+	  uii_accept();
 
     // Check if entry is a dir by checking if bit 4 of first byte is set
     if(uii_data[0]&0x10) { presenttype=CBM_T_DIR; }
@@ -408,7 +415,7 @@ unsigned char readDir(const BYTE device) {
 
     while(1)
     {
-        current = calloc(1,sizeof(direlement_size));
+        current = allocDir();
         if (!current) { goto stop; }
 
         if(!fb_uci_mode) {
@@ -417,7 +424,7 @@ unsigned char readDir(const BYTE device) {
             ret = UCIReadDir(&(current->dirent));
         }
         if (ret != 0) {
-            free(current);
+            address_dir--;
             goto stop;
         }
     
@@ -454,25 +461,24 @@ unsigned char readDir(const BYTE device) {
             } else {
                 strcpy(cwd.name, "Unknown type");
             }
-            free(current);
-        }
-        else if (current->dirent.type==CBM_T_FREE)
-        {
-            // blocks free entry
-            cwd.free=current->dirent.size;
-            free(current);
-            goto stop;
-        }
-        else if (cwd.firstelement==NULL)
-        {
-            // first element
-            cwd.firstelement = current;
-            previous = current;
         } else {
-            // all other elements
-            current->prev = previous;
-            previous->next = current;
-            previous = current;
+          if (current->dirent.type==CBM_T_FREE)
+          {
+              // blocks free entry
+              cwd.free=current->dirent.size;
+              goto stop;
+          }
+          else if (cwd.firstelement==NULL)
+          {
+              // first element
+              cwd.firstelement = current;
+              previous = current;
+          } else {
+              // all other elements
+              current->prev = previous;
+              previous->next = current;
+              previous = current;
+          }
         }
     }
     
@@ -694,71 +700,6 @@ void refreshDir()
   showDir();
 }
 
-int changeDir(const BYTE device, char *dirname)
-{
-    int ret;
-    register BYTE l = strlen(dirname);
-  
-    if (dirname) {
-        CheckMounttype(dirname);
-
-        if(mountflag==2 && (trace == 1 || fb_uci_mode)) {
-          reuflag = 1;
-          StringSafeCopy(imagename,dirname,19);
-        }   
-        if(fb_uci_mode && !inside_mount) {   
-            uii_change_dir(PetToAsc(dirname));
-            if(mountflag == 1) {
-                if(!uii_success()) { return 1; }
-                uii_get_deviceinfo();
-                if(!uii_success()) {
-                    clrscr();
-                    printf("Old Ultimate firmware detected.\n\r");
-                    errorexit();
-                }
-                uii_enable_drive_a();
-                uii_mount_disk(imageaid,dirname);
-                imageaid = uii_data[2];
-                StringSafeCopy(imageaname,dirname,19);
-                uii_get_path();
-                StringSafeCopy(imageapath,AscToPet(uii_data),99);
-                if(!uii_success()) { return 1; }
-                trace = 1;
-                inside_mount = 1;
-                fb_uci_mode = 0;
-            }
-        } else {
-            if (mountflag==1 || (l == 1 && dirname[0]==CH_LARROW) || 
-            devicetype[device] == VICE || devicetype[device] == U64) {
-                sprintf(linebuffer, "cd:%s", dirname);
-            }
-            else
-            {
-                sprintf(linebuffer, "cd/%s/", dirname);
-            }
-        }
-
-        if (trace == 1 )
-        {
-            StringSafeCopy(path[depth], dirname,19);
-        }
-    } else {
-        if(fb_uci_mode) {
-            uii_change_dir("/");
-        } else {
-            strcpy(linebuffer, "cd//");
-        }
-    }
-    if(fb_uci_mode) {
-        ret = (uii_success())?0:1;
-    } else {
-        ret = cmd(device, linebuffer);
-    }
-    if (ret == 0) { refreshDir(); }
-    return ret;
-}
-
-// Filebrowset interface functions
 void updateMenu(void)
 {
   BYTE menuy=2;
@@ -819,6 +760,96 @@ void updateMenu(void)
   }
 }
 
+int changeDir(const BYTE device, char *dirname)
+{
+    int ret;
+    register BYTE l = strlen(dirname);
+    unsigned char x;
+  
+    if (dirname) {
+        CheckMounttype(dirname);
+
+        if(mountflag==2 && (trace == 1 || fb_uci_mode)) {
+          reuflag = 1;
+          StringSafeCopy(imagename,dirname,19);
+        }   
+        if(fb_uci_mode && !inside_mount) {
+            if(mountflag == 1) {
+                uii_get_deviceinfo();
+
+                if(!uii_success()) {
+                    clrscr();
+                    printf("Old Ultimate firmware detected.\n\r");
+                    errorexit();
+                }
+                cputsxy(26,21,"DevInfo:");
+                gotoxy(26,22);
+                for(x=0;x<7;x++) { cprintf("%2X",uii_data[x]); }
+                cgetc();
+
+                uii_enable_drive_a();
+                clearArea(26,21,14,2);
+                cputsxy(26,21,"Power A on:");
+                cputsxy(26,22,uii_status);
+                cgetc();
+
+                uii_mount_disk(imageaid,dirname);
+                clearArea(26,21,14,2);
+                cputsxy(26,21,"Mount on A:");
+                cputsxy(26,22,uii_status);
+                cgetc();
+
+                imageaid = uii_data[2];
+                StringSafeCopy(imageaname,dirname,19);
+                clearArea(26,21,14,2);
+                gotoxy(26,21);
+                cprintf("ID:",imageaid);
+                cputsxy(26,22,imageaname);
+                cgetc();
+
+                clearArea(26,21,14,2);
+                uii_get_path();
+                StringSafeCopy(imageapath,AscToPet(uii_data),99);
+                if(!uii_success()) { return 1; }
+                trace = 1;
+                inside_mount = 1;
+                fb_uci_mode = 0;
+                refreshDir();
+                updateMenu();
+            } else {
+                uii_change_dir(PetToAsc(dirname));
+            }
+        } else {
+            if (mountflag==1 || (l == 1 && dirname[0]==CH_LARROW) || 
+            devicetype[device] == VICE || devicetype[device] == U64) {
+                sprintf(linebuffer, "cd:%s", dirname);
+            }
+            else
+            {
+                sprintf(linebuffer, "cd/%s/", dirname);
+            }
+        }
+
+        if (trace == 1 )
+        {
+            StringSafeCopy(path[depth], dirname,19);
+        }
+    } else {
+        if(fb_uci_mode) {
+            uii_change_dir("/");
+        } else {
+            strcpy(linebuffer, "cd//");
+        }
+    }
+    if(fb_uci_mode) {
+        ret = (uii_success())?0:1;
+    } else {
+        ret = cmd(device, linebuffer);
+    }
+    if (ret == 0) { refreshDir(); }
+    return ret;
+}
+
 void updateScreen()
 {
   clrscr();
@@ -872,6 +903,8 @@ void mainLoopBrowse(void)
 
   memset(&cwd,0,sizeof(cwd));
   memset(disk_id_buf, 0, DISK_ID_LEN);
+  address_dir = (void*)FirstSlot;
+  address_dir_max = (unsigned int)address_dir + 20*SLOTSIZE - 1;
 
   uii_change_dir_home();
   updateScreen();
@@ -1076,14 +1109,23 @@ void mainLoopBrowse(void)
         // --- leave directory
         case CH_CURS_LEFT:
         case CH_DEL:
-          if (trace == 1)
-          {
-            --depth;
-          }
-          if(fb_uci_mode) {
+          if(inside_mount && depth) {
+            inside_mount = 0;
+            fb_uci_mode = 1;
+            trace = 0;
             changeDir(0, "..");
+            refreshDir();
+            updateMenu();            
           } else {
-            changeDir(device, devicetype[device] == U64?"..":"\xff");
+            if (trace == 1)
+            {
+              --depth;
+            }
+            if(fb_uci_mode) {
+              changeDir(0, "..");
+            } else {
+              changeDir(device, devicetype[device] == U64?"..":"\xff");
+            }
           }
           break;
 
@@ -1171,7 +1213,6 @@ void mainLoopBrowse(void)
     }
 
  done:;
-    freeDir();
     clearArea(0,2,40,23);
     gotoxy(0,3);
     cputs("Reading slots back to memory.");

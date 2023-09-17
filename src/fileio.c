@@ -80,14 +80,12 @@ void CheckStatus(char* message) {
     }
 }
 
-void FreeSlotMemory() {
-  free(FirstSlot); 
-  FirstSlot=0;
-}
-
 void std_write(char * filename,unsigned char verbose)
 {
     unsigned char x;
+
+    // Go to proper dir
+    uii_change_dir(UCI_CFG_LOC);
 
     // Delete old config file as I can not (yet) get overwrite to work
 	  uii_delete_file(filename);
@@ -119,15 +117,8 @@ void std_read(char * filename,unsigned char verbose)
     unsigned char x;
     char* readaddress;
 
-    // Allocate slots memory
-    if(FirstSlot) { FreeSlotMemory(); }
-    FirstSlot = calloc(19,SLOTSIZE);
-
-    // Abort if insufficient memory
-    if(!FirstSlot) {
-        printf("\n\rOut of memory.\n\r");
-        errorexit();
-    }
+    // Go to proper dir
+    uii_change_dir(UCI_CFG_LOC);
 
     Slot = FirstSlot;
     readaddress = (char*)FirstSlot;

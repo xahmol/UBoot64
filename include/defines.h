@@ -56,6 +56,9 @@ typedef unsigned char BYTE;
 #define VIC_SPR_ENA     0xD015
 #define VIC_SPR2_COLOR  0xD029
 
+// Standard location of config files on UCI filesystem
+#define UCI_CFG_LOC     "/usb*/"
+
 // Global variables
 extern BYTE SCREENW;
 extern BYTE DIRW;

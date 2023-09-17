@@ -136,12 +136,19 @@ void main() {
             bankout();
         } else { printf("Ultimate Command Interface detected.\n\r"); }
 
-        uii_change_dir("/usb*/");
+        uii_change_dir(UCI_CFG_LOC);
 	    printf("\nDir changed\nStatus: %s", uii_status);
 
 	    readconfigfile(configfilename);
 
         // Load slot config
+        FirstSlot = calloc(19,SLOTSIZE);
+
+        // Abort if insufficient memory
+        if(!FirstSlot) {
+            printf("\n\rOut of memory.\n\r");
+            errorexit();
+        }
         std_read(slotfilename,1); // Read config file
 
         // Set time from NTP server
@@ -172,7 +179,6 @@ void main() {
         {
         case CH_F1:
             // Filebrowser
-            FreeSlotMemory(); // Free slot memory to make room for dir
             bankrun(1);  // Jump to bank of filebrowser and start entry point
             break;
 
@@ -195,6 +201,7 @@ void main() {
         }
     } while (menuselect != CH_F7);
 
+    free(FirstSlot);
     bankout();
 }
 
