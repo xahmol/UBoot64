@@ -198,11 +198,8 @@ void headertext(char* subtitle)
     cspaces(SCREENW);
     gotoxy(0,1);
     cprintf("%s\n\n\r", subtitle);
-    if(SCREENW == 80)
-    {
-        uii_get_time();
-        cputsxy(80-strlen((const char*)uii_data),1,(const char*)uii_data);
-    }
+    uii_get_time();
+    cputsxy(SCREENW-strlen((const char*)uii_data),1,(const char*)uii_data);
     revers(0);
     textcolor(DC_COLOR_TEXT);
 }

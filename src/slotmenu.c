@@ -148,7 +148,7 @@ void mainmenu()
     char key;
 
     clrscr();
-    headertext("Welcome to your Commodore 64.");
+    headertext("Welcome to your C64.");
 
     Slot = FirstSlot;
 
@@ -244,8 +244,23 @@ void pickmenuslot()
     char deviceidbuffer[3];
     char* ptrend;
     
+    //clrscr();
+    //printf("A ID: %d Imagelen: %3d\n\r",imageaid,strlen(imageaname));
+    //printf("%s\n\r",imageaname);
+    //printf("%s\n\r",imageapath);
+    //printf("File name len: %3d\n\r",strlen(pathfile));
+    //printf("%s\n\r",pathfile);
+    //printf("B ID: %d Imagelen: %3d\n\r",imagebid,strlen(imagebname));
+    //printf("%s\n\r",imagebname);
+    //printf("%s\n\r",imagebpath);
+    //cgetc();
+    //strcpy(linebuffer,"");
+    //textInput(0,24,linebuffer,20);
+    //strcpy(Slot->menu,linebuffer);
+    //cgetc();
+
     clrscr();
-    headertext("Choose menuslot for chosen start option.");
+    headertext("Choose menuslot.");
     presentmenuslots();
     gotoxy(0,21);
     cputs("Choose slot by pressing key: ");
@@ -257,6 +272,7 @@ void pickmenuslot()
     selected = 1;
     Slot = FirstSlot + menuslot;
     cprintf("%c", key);
+
     if ( strlen(Slot->menu) != 0 )
     {
         gotoxy(0,22);
@@ -272,12 +288,12 @@ void pickmenuslot()
     }
     if ( selected == 1)
     {
-        clearArea(0,22,80,3);
-        gotoxy(0,23);
-        cputs("Choose name for slot:");
+        clearArea(0,22,SCREENW,3);
+        cputsxy(0,23,"Choose name for slot:");
+
         textInput(0,24,Slot->menu,20);
 
-        clearArea(0,23,80,2);
+        clearArea(0,23,SCREENW,2);
         gotoxy(0,23);
         if(reuflag || addmountflag) {
             if(reuflag) {
@@ -653,7 +669,7 @@ int reordermenuslot()
 
         if (key != CH_F7)
         {
-            clearArea(0,22,40,2);
+            clearArea(0,22,SCREENW,2);
 
             menuslot = keytomenuslot(key);
             Slot = FirstSlot + menuslot;
@@ -705,7 +721,7 @@ int reordermenuslot()
                         }
                         Slot = FirstSlot;
                         memcpy(Slot,BufferSlot,SLOTSIZE);
-                        clearArea(0,3,40,18);
+                        clearArea(0,3,SCREENW,18);
                         presentmenuslots();
                         printnewmenuslot(0,1,Slot->menu);
                         newslot = 0;
@@ -730,7 +746,7 @@ int reordermenuslot()
                         }
                         Slot = FirstSlot + maxpos;
                         memcpy(Slot,BufferSlot,SLOTSIZE);
-                        clearArea(0,3,40,18);
+                        clearArea(0,3,SCREENW,18);
                         presentmenuslots();
                         printnewmenuslot(maxpos,1,Slot->menu);
                         newslot = maxpos;
@@ -776,7 +792,7 @@ int edituserdefinedcommand()
     BYTE selected = 0;
 
     clrscr();
-    headertext("Edit user defined command");
+    headertext("Edit command");
 
     presentmenuslots();
 
@@ -805,7 +821,7 @@ int edituserdefinedcommand()
     if (selected == 1)
     {
         clrscr();
-        headertext("Edit user defined command");
+        headertext("Edit command");
 
         gotoxy(0,3);
         cputs("Chosen slot:\n\r");
@@ -843,7 +859,7 @@ void editmenuoptions()
     do
     {
         clrscr();
-        headertext("Edit/Re-order/Delete menu slots");
+        headertext("Edit/Re-order/Delete");
 
         presentmenuslots();
 
@@ -940,7 +956,7 @@ void information()
     POKE(VIC_SPR_ENA,4);                // Enable sprite 2
     POKE(VIC_SPR2_Y,220);               // Set Y position
 
-    headertext("Information and credits");
+    headertext("Info and credits");
 
     cputs("\n\rUBoot64: Boot menu for Ultimate devices\n\n\r");
     cprintf("Version: v%i%i-", VERSION_MAJOR, VERSION_MINOR);

@@ -761,7 +761,7 @@ int changeDir(const BYTE device, char *dirname)
 {
     int ret;
     register BYTE l = strlen(dirname);
-    unsigned char x;
+    //unsigned char x;
   
     if (dirname) {
         CheckMounttype(dirname);
@@ -779,34 +779,34 @@ int changeDir(const BYTE device, char *dirname)
                     printf("Old Ultimate firmware detected.\n\r");
                     errorexit();
                 }
-                cputsxy(26,21,"DevInfo:");
-                gotoxy(26,22);
-                for(x=0;x<7;x++) { cprintf("%2X",uii_data[x]); }
-                cgetc();
+                //cputsxy(26,21,"DevInfo:");
+                //gotoxy(26,22);
+                //for(x=0;x<7;x++) { cprintf("%2X",uii_data[x]); }
+                //cgetc();
 
                 imageaid = uii_data[2];
                 StringSafeCopy(imageaname,dirname,19);
-                clearArea(26,21,14,2);
-                gotoxy(26,21);
-                cprintf("ID: %d @ %4X",imageaid,&imageaid);
+                //clearArea(26,21,14,2);
+                //gotoxy(26,21);
+                //cprintf("ID: %d @ %4X",imageaid,&imageaid);
                 //cputsxy(26,22,imageaname);
-                cgetc();
+                //cgetc();
 
                 if(!uii_data[3]) {
                   uii_enable_drive_a();
-                  clearArea(26,21,14,2);
-                  cputsxy(26,21,"Power A on:");
-                  cputsxy(26,22,uii_status);
-                  cgetc();
+                  //clearArea(26,21,14,2);
+                  //cputsxy(26,21,"Power A on:");
+                  //cputsxy(26,22,uii_status);
+                  //cgetc();
                 }
 
                 uii_mount_disk(imageaid,dirname);
-                clearArea(26,21,14,2);
-                cputsxy(26,21,"Mount on A:");
-                cputsxy(26,22,uii_status);
-                cgetc();
+                //clearArea(26,21,14,2);
+                //cputsxy(26,21,"Mount on A:");
+                //cputsxy(26,22,uii_status);
+                //cgetc();
 
-                clearArea(26,21,14,2);
+                //clearArea(26,21,14,2);
                 uii_get_path();
                 StringSafeCopy(imageapath,uii_data,99);
                 if(!uii_success()) { return 1; }
@@ -1215,7 +1215,7 @@ void mainLoopBrowse(void)
     }
 
  done:;
-    clearArea(0,2,40,23);
+    clearArea(0,2,SCREENW,23);
     gotoxy(0,3);
     cputs("Reading slots back to memory.");
     bankrun(0);

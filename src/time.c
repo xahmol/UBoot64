@@ -310,8 +310,8 @@ void edittimeconfig()
             cputsxy(0,23,"Input time offset to UTC:");
             textInput(0,24,offsetinput,10);
             secondsfromutc = strtol(offsetinput,&ptrend,10);
-            clearArea(0,7,40,1);
-            clearArea(0,23,40,2);
+            clearArea(0,7,SCREENW,1);
+            clearArea(0,23,SCREENW,2);
             gotoxy(0,7);
             cprintf("- Offset to UTC in seconds: %ld\n\n\r",secondsfromutc);
             changesmade = 1;
@@ -320,8 +320,8 @@ void edittimeconfig()
         case CH_F5:
             cputsxy(0,23,"Input NTP server hostname:");
             textInput(0,24,host,79);
-            clearArea(0,9,40,1);
-            clearArea(0,23,40,2);
+            clearArea(0,9,SCREENW,1);
+            clearArea(0,23,SCREENW,2);
             gotoxy(0,9);
             mid(host,0,SCREENW,buffer2,SCREENW);
             cprintf("%s",buffer2);
