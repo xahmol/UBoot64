@@ -192,7 +192,7 @@ void headertext(char* subtitle)
     gotoxy(0,0);
     cspaces(SCREENW);
     gotoxy(0,0);  
-    cprintf("UBoot64: Boot Menu for Ultimate devices");
+    cprintf("UBoot64:  Boot Menu for Ultimate devices");
     textcolor(DMB_COLOR_HEADER2);
     gotoxy(0,1);
     cspaces(SCREENW);
