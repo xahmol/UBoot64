@@ -153,6 +153,24 @@ void main() {
 
         // Set time from NTP server
         time_main();
+
+        if(!uii_parse_deviceinfo()) {
+            printf("Getting device info fails.");
+            errorexit();
+        }
+        printf("\n\n\rRecognised Ultimate devices:\n\r");
+        if(uii_devinfo[0].exist) {
+            printf("Drive A: ID %2d Pow %s, %s\n\r",uii_devinfo[0].id,(uii_devinfo[0].power)?"On":"Off",uii_device_tyoe(uii_devinfo[0].type));
+        }
+        if(uii_devinfo[1].exist) {
+            printf("Drive B: ID %2d Pow %s, %s\n\r",uii_devinfo[1].id,(uii_devinfo[1].power)?"On":"Off",uii_device_tyoe(uii_devinfo[1].type));
+        }
+        if(uii_devinfo[2].exist) {
+            printf("SoftIEC: ID %2d Pow %s\n\r",uii_devinfo[2].id,(uii_devinfo[2].power)?"On":"Off");
+        }
+        if(uii_devinfo[3].exist) {
+            printf("Printer: ID %2d Pow %s\n\r",uii_devinfo[3].id,(uii_devinfo[3].power)?"On":"Off");
+        }
     } else {
         // Restore slots in memory returning from filebrowser
         std_read(slotfilename,1);
@@ -168,13 +186,13 @@ void main() {
     do
     {
         mainmenu();
-//
-    //    if((menuselect>47 && menuselect<58) || (menuselect>64 && menuselect<91))
-    //    // Menuslots 0-9, a-z
-    //    {
-    //        runbootfrommenu(keytomenuslot(menuselect));
-    //    }
-//
+
+        if((menuselect>47 && menuselect<58) || (menuselect>64 && menuselect<91))
+        // Menuslots 0-9, a-z
+        {
+            runbootfrommenu(keytomenuslot(menuselect));
+        }
+
         switch (menuselect)
         {
         case CH_F1:

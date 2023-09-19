@@ -238,11 +238,9 @@ void pickmenuslot()
     // Routine to pick a slot to store the chosen dir trace path
     
     unsigned char menuslot;
-    unsigned char key,devid,plusmin,pos;
+    unsigned char key,plusmin;
     BYTE yesno;
     BYTE selected = 0;
-    char deviceidbuffer[3];
-    char* ptrend;
     
     //clrscr();
     //printf("A ID: %d Imagelen: %3d\n\r",imageaid,strlen(imageaname));
@@ -322,46 +320,25 @@ void pickmenuslot()
                 StringSafeCopy(Slot->reu_image,imagename,19);
                 Slot->command = Slot->command | COMMAND_REU;
             } else {
-                sprintf(deviceidbuffer,"%d",addmountflag==1?Slot->image_a_id:Slot->image_b_id);
-                cputs("Enter drive ID:       ");
-                textInput(0,24,deviceidbuffer,2);
-                devid = (unsigned char)strtol(deviceidbuffer,&ptrend,10);
                 if(addmountflag==1) {
-                    StringSafeCopy(Slot->image_a_path, pathconcat(),99);
-                    StringSafeCopy(Slot->image_a_file,imageaname,19);
-                    Slot->image_a_id = devid;
+                    Slot->image_a_id = imageaid;
+                    strcpy(Slot->image_a_path,imageapath);
+                    strcpy(Slot->image_a_file,imageaname);
                     Slot->command = Slot->command | COMMAND_IMGA;
                 } else {
-                    StringSafeCopy(Slot->image_b_path, pathconcat(),99);
-                    StringSafeCopy(Slot->image_b_file,imagebname,19);
-                    Slot->image_b_id = devid;
+                    Slot->image_b_id = imagebid;
+                    strcpy(Slot->image_b_path,imagebpath);
+                    strcpy(Slot->image_b_file,imagebname);
                     Slot->command = Slot->command | COMMAND_IMGB;
                 }
             }
         } else {
-            if(fb_uci_mode) {
-                // UCI: Ask device ID for image A
-                sprintf(deviceidbuffer,"%d",Slot->image_a_id);
-                cputs("Enter drive ID:       ");
-                textInput(0,24,deviceidbuffer,2);
-                Slot->device = (unsigned char)strtol(deviceidbuffer,&ptrend,10);
-
-                // UCI: Split path in path to image and image name
-                StringSafeCopy(Slot->image_a_path, pathconcat(),99);
-                pos=strlen(Slot->path);
-
-                // Search for last / from behind in path
-                do
-                {
-                    pos--;
-                } while (Slot->path[pos] != '/');
-                pos++;
-
-                // Derive image filename
-                StringSafeCopy(Slot->image_a_file,Slot->image_a_path+pos,19);
-
-                // Truncate image path
-                Slot->image_a_path[pos]=0;              
+            if(inside_mount) {
+                Slot->device = imageaid;
+                Slot->image_a_id = imageaid;
+                strcpy(Slot->image_a_path,imageapath);
+                strcpy(Slot->image_a_file,imageaname);
+                Slot->command = Slot->command | COMMAND_IMGA;         
             } else {
                 Slot->device = pathdevice;
             }
@@ -380,78 +357,82 @@ void pickmenuslot()
     }
 }
 
-//void mountimage(unsigned char device, char* path, char* image) {
-//    uii_change_dir(path);
-//    uii_mount_disk(device,image);
-//}
-//
-//void runbootfrommenu(int select)
-//{
-//    // Function to execute selected boot option choice slot 0-9
-//    // Input: select: chosen menuslot 0-9
-//
-//    getslotfromem(select);
-//
-//    clrscr();
-//    gotoxy(0,0);
-//    if(Slot->command & COMMAND_IMGA) {
-//        cprintf("%s on ID %d.\n\r",Slot->image_a_file,Slot->image_a_id);
-//        mountimage(Slot->image_a_id,Slot->image_a_path,Slot->image_a_file);
-//    }
-//    if(Slot->command & COMMAND_IMGB) {
-//        cprintf("%s on ID %d.\n\r",Slot->image_b_file,Slot->image_b_id);
-//        mountimage(Slot->image_b_id,Slot->image_b_path,Slot->image_b_file);
-//    }
-//    if(Slot->command & COMMAND_REU) {
-//        cprintf("REU file %s",Slot->reu_image);
-//        uii_change_dir(Slot->image_a_path);
-//        uii_open_file(1, Slot->reu_image);
-//        uii_load_reu(Slot->reusize);
-//        uii_close_file();
-//    }
-//
-//    // Enter correct directory path on correct device number
-//    if(Slot->runboot & EXEC_MOUNT) {
-//        // Run from mounted disk
-//        execute(Slot->file,Slot->image_a_id,Slot->runboot,Slot->cmd);
-//    } else {
-//        // Run from hyperspeed filesystem
-//        cmd(Slot->device,Slot->path);
-//        execute(Slot->file,Slot->device,Slot->runboot,Slot->cmd);
-//    }
-//}
-//
-//void commandfrommenu(char * command, int confirm)
-//{
-//    // Function to type specified command and execute by placing chars
-//    // in keyboard buffer.
-//    // Input:
-//    // command: command to be executed
-//    // confirm: is confirmation of command needed. 0 is no, 1 is yes.
-//
-//    // prepare the screen with the basic command to load the next program
-//    exitScreen();
-//    gotoxy(0,2);
-//
-//    cprintf("%s",command);
-//
-//    // put CR in keyboard buffer
-//    *((unsigned char *)KBCHARS)=13;
-//    if (confirm == 1)  // if confirm is 1 also put 'y'+CR in buffer
-//    {
-//        *((unsigned char *)KBCHARS+1)=89;  // place 'y'
-//        *((unsigned char *)KBCHARS+2)=13;  // place CR
-//        *((unsigned char *)KBNUM)=3;
-//    }
-//    else
-//    {
-//        *((unsigned char *)KBNUM)=1;
-//    }
-//
-//    // exit DraCopy, which will execute the BASIC LOAD above
-//    gotoxy(0,0);
-//    exit(0);
-//}
+void ErrorCheckMmounting() {
+    if(!uii_success()) {
+        printf("\n\rError on mounting.\n\r");
+        printf("%s\n\r",uii_status);
+        errorexit();
+    }
+}
+
+void mountimage(unsigned char device, char* path, char* image) {
+    uii_change_dir(path);
+    uii_mount_disk(device,image);
+    ErrorCheckMmounting();
+}
+
+void ToggleDrivePower(unsigned char ab, unsigned char on) {
+    uii_get_deviceinfo();
+    if(!ab && on) {
+        // Power on drive A if needed
+        if(!uii_data[3]) { uii_enable_drive_a(); }
+    }
+    if(!ab && !on) {
+        // Power on drive A if needed
+        if(uii_data[3]) { uii_disable_drive_a(); }
+    }
+    if(ab && on) {
+        // Power on drive B if needed
+        if(!uii_data[6]) { uii_enable_drive_b(); }
+    }
+    if(ab && !on) {
+        // Power on drive B if needed
+        if(uii_data[6]) { uii_disable_drive_b(); }
+    }
+}
+
+void runbootfrommenu(int select)
+{
+    // Function to execute selected boot option choice slot 0-9
+    // Input: select: chosen menuslot 0-9
+
+    Slot = FirstSlot + select;
+
+    clrscr();
+    gotoxy(0,0);
+    if(Slot->command & COMMAND_IMGA) {
+        cprintf("%s on ID %d.\n\r",Slot->image_a_file,Slot->image_a_id);
+        ToggleDrivePower(0,1);
+        mountimage(Slot->image_a_id,Slot->image_a_path,Slot->image_a_file);
+    } else {
+        ToggleDrivePower(0,0);
+    }
+    if(Slot->command & COMMAND_IMGB) {
+        cprintf("%s on ID %d.\n\r",Slot->image_b_file,Slot->image_b_id);
+        ToggleDrivePower(1,1);
+        mountimage(Slot->image_b_id,Slot->image_b_path,Slot->image_b_file);
+    } else {
+        ToggleDrivePower(1,0);
+    }
+    if(Slot->command & COMMAND_REU) {
+        cprintf("REU file %s",Slot->reu_image);
+        uii_change_dir(Slot->image_a_path);
+        uii_open_file(1, Slot->reu_image);
+        uii_load_reu(Slot->reusize);
+        uii_close_file();
+        ErrorCheckMmounting();
+    }
+
+    // Enter correct directory path on correct device number
+    if(Slot->runboot & EXEC_MOUNT) {
+        // Run from mounted disk
+        execute(Slot->file,Slot->image_a_id,Slot->runboot,Slot->cmd);
+    } else {
+        // Run from IEC filesystem
+        cmd(Slot->device,Slot->path);
+        execute(Slot->file,Slot->device,Slot->runboot,Slot->cmd);
+    }
+}
 
 int deletemenuslot()
 {

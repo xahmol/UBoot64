@@ -99,20 +99,34 @@ extern unsigned char *controlreg;
 extern unsigned char *statusreg;
 extern unsigned char *respdatareg;
 extern unsigned char *statusdatareg;
-
 extern char uii_status[STATUS_QUEUE_SZ+1];
 extern char uii_data[(DATA_QUEUE_SZ*2)+1];
-
 extern char temp_string_onechar[2];
 extern int uii_data_index;
 extern int uii_data_len;
-
 extern unsigned char uii_target;
-
-struct DirectoryEntry {
-	unsigned char attributes;
-	unsigned char *filename;
+struct DevInfo {
+// Structure to parse drive info
+	unsigned char exist;
+	// Does it exist? 0 = no 1 = yes
+	unsigned char type;
+	// Type (hex):
+	// 00 = 1541
+	// 01 - 1571
+	// 02 = 1581
+	// 0F = SoftIEC
+	// 50 = Printer
+	unsigned char power;
+	// Power 0 = off 1 = on
+	unsigned char id;
+	// IEC ID
 };
+extern struct DevInfo uii_devinfo[4];
+// Array of info per device
+// 0 = drive A
+// 1 = drive B
+// 2 = SoftIEC
+// 3 = Printerindo
 
 // GEOS addition protptypes by Xander Mol
 void enableIO();

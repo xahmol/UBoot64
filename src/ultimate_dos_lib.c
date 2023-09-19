@@ -310,3 +310,84 @@ void uii_get_deviceinfo(void)
 	uii_readstatus();
 	uii_accept();
 }
+
+unsigned char uii_parse_deviceinfo(void)
+{
+	unsigned char devicecount,count,temp;
+
+	// Execute UCI 29 : CTRL_CMD_GET_DRVINFO
+	uii_get_deviceinfo();
+
+	// Return with success code = 0 if no success
+	if(!uii_success()) { return 0; }
+
+	// Get number of devices to parse
+	devicecount = uii_data[0];
+	if(!devicecount) { return 0; }
+	
+	// Parse first type
+	count=1;
+	temp = uii_data[count++];
+
+	// Parse drive A
+	if(temp<0x0f) {
+		// Drive A found
+		uii_devinfo[0].exist = 1;
+		uii_devinfo[0].type = temp;
+		uii_devinfo[0].id = uii_data[count++];
+		uii_devinfo[0].power = uii_data[count++];
+		temp = uii_data[count++];
+	}
+
+	// Parse drive B
+	if(temp<0x0f) {
+		// Drive A found
+		uii_devinfo[1].exist = 1;
+		uii_devinfo[1].type = temp;
+		uii_devinfo[1].id = uii_data[count++];
+		uii_devinfo[1].power = uii_data[count++];
+		temp = uii_data[count++];
+	}
+
+	// Parse SoftIEC
+	if(temp==0x0f) {
+		// SoftIEC
+		uii_devinfo[2].exist = 1;
+		uii_devinfo[2].type = temp;
+		uii_devinfo[2].id = uii_data[count++];
+		uii_devinfo[2].power = uii_data[count++];
+		temp = uii_data[count++];
+	}
+
+	// Parse soft printer
+	if(temp==0x50) {
+		// SoftPrinter
+		uii_devinfo[3].exist = 1;
+		uii_devinfo[3].type = temp;
+		uii_devinfo[3].id = uii_data[count++];
+		uii_devinfo[3].power = uii_data[count];
+	}
+
+	return 1;
+}
+
+char* uii_device_tyoe(unsigned char typeval) {
+	switch (typeval)
+	{
+	case 0:
+		return "1541";
+		break;
+
+	case 1:
+		return "1571";
+		break;
+	
+	case 2:
+		return "1581";
+		break;
+
+	default:
+		return "";
+		break;
+	}
+}

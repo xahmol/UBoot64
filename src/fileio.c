@@ -134,8 +134,8 @@ void std_read(char * filename,unsigned char verbose)
               gotoxy(0,8);
               cprintf("Creating slot %2d",x+1);
             }
-            sprintf(Slot->menu,"Debug %2d",x);
-            //strcpy(Slot->menu,"");
+            //sprintf(Slot->menu,"Debug %2d",x);
+            strcpy(Slot->menu,"");
             strcpy(Slot->path,"");
             strcpy(Slot->file,"");
             strcpy(Slot->cmd,"");

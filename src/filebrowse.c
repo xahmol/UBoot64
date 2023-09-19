@@ -720,7 +720,7 @@ void updateMenu(void)
   if(!fb_uci_mode) {
     cputsxy(MENUX+1,++menuy,"  D Dirtrace");
   }
-  if(trace || fb_uci_mode) {
+  if(fb_uci_mode) {
     cputsxy(MENUX+1,++menuy," AB Add mount");
     cputsxy(MENUX+1,++menuy,"  M Run mount");
   } else { menuy += 2; }
@@ -1087,7 +1087,7 @@ void mainLoopBrowse(void)
               else
               {
                 StringSafeCopy(pathfile, current->dirent.name,19);
-                pathrunboot = 0;
+                pathrunboot = comma1*EXEC_COMMA1;
                 fb_selection_made = 1;
                 goto done;
               }             
@@ -1186,28 +1186,53 @@ void mainLoopBrowse(void)
           break;
 
         case 'a':
-          CheckMounttype(current->dirent.name);
-          if(mountflag==1) {
-            addmountflag = 1;
-            StringSafeCopy(imageaname,current->dirent.name,19);
-            fb_selection_made=1;
-            goto done;
+          if(fb_uci_mode) {
+            CheckMounttype(current->dirent.name);
+            if(mountflag==1) {
+              addmountflag = 1;
+              uii_get_deviceinfo();
+              if(!uii_success()) {
+                  clrscr();
+                  printf("Old Ultimate firmware detected.\n\r");
+                  errorexit();
+              }
+              imageaid = uii_data[2];
+              StringSafeCopy(imageaname,current->dirent.name,19);
+              uii_get_path();
+              StringSafeCopy(imageapath,uii_data,99);
+              fb_selection_made=1;
+              goto done;
+            }
           }
+          break;
+
         
         case 'b':
-          CheckMounttype(current->dirent.name);
-          if(mountflag==1) {
-            addmountflag = 2;
-            StringSafeCopy(imagebname,current->dirent.name,19);
-            fb_selection_made=1;
-            goto done;
+          if(fb_uci_mode) {
+            CheckMounttype(current->dirent.name);
+            if(mountflag==1) {
+              addmountflag = 2;
+              uii_get_deviceinfo();
+              if(!uii_success()) {
+                  clrscr();
+                  printf("Old Ultimate firmware detected.\n\r");
+                  errorexit();
+              }
+              imagebid = uii_data[5];
+              StringSafeCopy(imagebname,current->dirent.name,19);
+              uii_get_path();
+              StringSafeCopy(imagebpath,uii_data,99);
+              fb_selection_made=1;
+              goto done;
+            }
           }
+          break;
 
         case 'm':
           if(mountflag==1 && imageaid) {
             runmountflag = 1;
             StringSafeCopy(pathfile, current->dirent.name,19);
-            pathrunboot = 0;
+            pathrunboot = comma1*EXEC_COMMA1;
             fb_selection_made=1;
             goto done;
           }

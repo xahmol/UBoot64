@@ -75,7 +75,7 @@ extern BYTE mountflag;
 extern BYTE reuflag;
 extern BYTE addmountflag;
 extern BYTE runmountflag;
-extern struct SlotStruct {
+struct SlotStruct {
     char path[100];
     char menu[21];
     char file[20];

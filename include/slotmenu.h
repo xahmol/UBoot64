@@ -11,5 +11,6 @@ int deletemenuslot();
 int edituserdefinedcommand();
 void editmenuoptions();
 void information();
+void runbootfrommenu(int select);
 
 #endif

@@ -30,6 +30,7 @@ int uii_data_index;
 int uii_data_len;
 
 unsigned char uii_target = TARGET_DOS1;
+struct DevInfo uii_devinfo[4];
 
 // Core functions
 unsigned char uii_detect(void)
