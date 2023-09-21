@@ -3,6 +3,8 @@
 
 #include "defines.h"
 
+void iec_present();
+unsigned char CheckActiveIECdevices();
 void errorexit();
 void StringSafeCopy(char* dest, char* src, unsigned char maxlen);
 void CheckStatus(char* message);

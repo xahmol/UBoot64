@@ -204,6 +204,64 @@ void headertext(char* subtitle)
     textcolor(DC_COLOR_TEXT);
 }
 
+// IO routines
+unsigned char CheckIfUltimateOnID(unsigned char id) {
+// Check if an ultimate device exists for which powertoggle by UCI is not possible
+// Bit 0: Exists yes or no
+// Bit 1: Powered on yes or no
+// Bit 2: UCI controllabke yes or no
+
+  unsigned char x;
+  unsigned char checkvalue;
+
+  for(x=0;x<4;x++) {
+    if(uii_devinfo[x].id == id) {
+      checkvalue = 1;                               // Set bit 0 if exists
+      checkvalue += (uii_devinfo[x].power)?2:0;     // Set bit 1 if powered
+      checkvalue += (uii_devinfo[x].type<0x0f)?4:0; // Set bit 2 if UCI controllable
+      return checkvalue;
+    }
+  }
+  return 0;                                         // No Ultimate device on ID
+}
+
+unsigned char CheckActiveIECdevices() {
+// Check all non drivve A and B IEC devices if they are active or not
+// Fill iec_devices array and return 1 if any is active, 0 for none
+
+  unsigned char anyactive = 0;
+  unsigned char x,check;
+
+  // Wipe array
+  memset(iec_devices,0,sizeof(iec_devices));
+
+  // First get Ultimate devices
+  if(!uii_parse_deviceinfo()) { errorexit(); }
+
+  // Check IDs 8 to 30
+  for(x=0;x<23;x++) {
+    iec_device = (x==22)?4:x+8;
+    check = (CheckIfUltimateOnID(iec_device));
+    //printf("C%d ",check);
+    if(check) {
+      if(check > 1) {
+        iec_devices[x] = 1;
+        anyactive = (check==3)?1:0; // Set anyactive if not UCI controllable and powered
+      }
+    } else {
+      iec_present();
+      //printf("I%d ",iec_device);
+      if(iec_device) {
+        iec_devices[x] = 1;
+        anyactive = 1;
+      }
+    }
+    //printf("%2d:%d ",iec_device,iec_devices[x]);
+  }
+
+  return anyactive;
+}
+
 BYTE dosCommand(const BYTE lfn, const BYTE drive, const BYTE sec_addr, const char *cmd)
 {
   int res;

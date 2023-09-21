@@ -98,7 +98,7 @@ void std_write(char * filename,unsigned char verbose)
     for(x=0; x<18; ++x)
     {
       if(verbose) {
-        gotoxy(0,8);
+        gotoxy(0,5);
         cprintf("Writing slot %2d  ",x+1,Slot);
       }
       uii_write_file((unsigned char*)Slot,SLOTSIZE);
@@ -131,7 +131,7 @@ void std_read(char * filename,unsigned char verbose)
         for(x=0; x<18; ++x)
         {
             if(verbose) {
-              gotoxy(0,8);
+              gotoxy(0,5);
               cprintf("Creating slot %2d",x+1);
             }
             //sprintf(Slot->menu,"Debug %2d",x);
@@ -161,7 +161,7 @@ void std_read(char * filename,unsigned char verbose)
 
     while (uii_isdataavailable()) {
       if(verbose) {
-        gotoxy(0,9);
+        gotoxy(0,5);
         cprintf("Reading slots: %4X",readaddress);
       }
 

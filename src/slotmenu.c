@@ -358,6 +358,8 @@ void pickmenuslot()
 }
 
 void ErrorCheckMmounting() {
+// Error handling for disk and REU mounting
+
     if(!uii_success()) {
         printf("\n\rError on mounting.\n\r");
         printf("%s\n\r",uii_status);
@@ -366,29 +368,55 @@ void ErrorCheckMmounting() {
 }
 
 void mountimage(unsigned char device, char* path, char* image) {
+// Mount an imamage on an Ultimate emulated drive
+// Device = IEC ID, path and image are path and filename to image to mount
+
     uii_change_dir(path);
     uii_mount_disk(device,image);
     ErrorCheckMmounting();
 }
 
 void ToggleDrivePower(unsigned char ab, unsigned char on) {
-    uii_get_deviceinfo();
-    if(!ab && on) {
-        // Power on drive A if needed
-        if(!uii_data[3]) { uii_enable_drive_a(); }
+// Toggle power for the Ultimate drives
+// - ab: Drive A = 0, Drive B = 1
+// - on: 0 = switch off, 1 = switch on
+
+    if(!uii_parse_deviceinfo()) { ErrorCheckMmounting(); }
+
+    if(uii_devinfo[ab].exist) {
+    // Drive selected and existing
+        cprintf("Drive %s ",(ab)?"B":"A");
+
+        if(on) {
+            if(!uii_devinfo[ab].power) {
+            // Power on drive A if needed
+                if(!ab) { 
+                    uii_enable_drive_a();
+                } else {
+                    uii_enable_drive_b();
+                }
+                cputs("powered on.\n\r");
+            } else {
+                cputs("already on.\n\r");
+            }
+        }
+
+        if(!on) {
+            if(uii_devinfo[ab].power) {
+            // Power on drive A if needed
+                if(!ab) { 
+                    uii_disable_drive_a();
+                } else {
+                    uii_disable_drive_b();
+                }
+                cputs("powered off.\n\r");
+            } else {
+                cputs("already off.\n\r");
+            }
+        }
     }
-    if(!ab && !on) {
-        // Power on drive A if needed
-        if(uii_data[3]) { uii_disable_drive_a(); }
-    }
-    if(ab && on) {
-        // Power on drive B if needed
-        if(!uii_data[6]) { uii_enable_drive_b(); }
-    }
-    if(ab && !on) {
-        // Power on drive B if needed
-        if(uii_data[6]) { uii_disable_drive_b(); }
-    }
+
+    if(!uii_success()) { ErrorCheckMmounting(); }
 }
 
 void runbootfrommenu(int select)

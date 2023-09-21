@@ -120,15 +120,19 @@ unsigned char menuselect;
 unsigned char fb_selection_made = 0;
 unsigned char fb_uci_mode;
 unsigned char inside_mount;
+char iec_devices[23];
 
 //Main program
 void main() {
+    unsigned char clock,x;
 
     SCREENW = 40;  //Set flag for 40 column
     DIRW = 25;
     MENUX = 25;
 
     if(!fb_selection_made) {
+        
+        // Is Ultimate Command Interface detected? If no, abort
         if(!uii_detect()) {
             cputs("No Ultimate Command Interface enabled.");
             printf("\n\rPress key to exit.\n\r");
@@ -136,24 +140,36 @@ void main() {
             bankout();
         } else { printf("Ultimate Command Interface detected.\n\r"); }
 
-        uii_change_dir(UCI_CFG_LOC);
-	    printf("\nDir changed\nStatus: %s", uii_status);
+        // Feedback on UCI DOS version
+        uii_identify();
+        printf("%s",uii_data);
 
+        // Wait for USB to be present by looping till dirchange to root successful
+        // Times out on 5 secs
+        cia_seconds = 0;
+        cia_tensofsec = 0;
+        clock = cia_seconds;
+        do
+        {
+            uii_change_dir(UCI_CFG_LOC);
+        } while (!uii_success() || clock>4);
+        if(!uii_success()) { printf("\n\rUSB storage not found.\n\r"); }
+
+        // Read config file
 	    readconfigfile(configfilename);
 
-        // Load slot config
+        // Allocate slot memory
         FirstSlot = calloc(19,SLOTSIZE);
-
         // Abort if insufficient memory
         if(!FirstSlot) {
             printf("\n\rOut of memory.\n\r");
             errorexit();
         }
-        std_read(slotfilename,1); // Read config file
 
-        // Set time from NTP server
-        time_main();
+        // Read config file
+        std_read(slotfilename,1);
 
+        // Read drive configuration
         if(!uii_parse_deviceinfo()) {
             printf("Getting device info fails.");
             errorexit();
@@ -171,6 +187,20 @@ void main() {
         if(uii_devinfo[3].exist) {
             printf("Printer: ID %2d Pow %s\n\r",uii_devinfo[3].id,(uii_devinfo[3].power)?"On":"Off");
         }
+        printf("IDs needing manual power switching: %s\n\r",(CheckActiveIECdevices())?"Yes":"No");
+        printf("Active IEC IDs: ");
+        for(x=0;x<23;x++) {
+            if(iec_devices[x]) {
+                printf("%02d ",(x==22)?4:x+8);
+            }
+        }
+        printf("\n\r");
+
+        // Set time from NTP server
+        time_main();
+
+        // Uncomment to pause on boot status feedback for debug
+        //cgetc();
     } else {
         // Restore slots in memory returning from filebrowser
         std_read(slotfilename,1);

@@ -4,7 +4,7 @@
 ;
 ;------------------------------------------------------------------------------
 
-.export		_bankrun, _bankout, _execute_commands, _execute_keys
+.export		_bankrun, _bankout, _iec_present, _iec_device, _execute_commands, _execute_keys
 .import		_codetable, _exit, donelib
 
 .importzp	tmp1, ptr1, ptr2, regbank, sp
@@ -147,6 +147,27 @@ _bankrun:
 	txs
 	jmp	(ptr1)
 
+_iec_present:
+; Routine to check if a device is active on given IEC device
+; Inoyt is device ID in iec_device, output is 0 Not active or 1 acive on iec_device
+	lda _iec_device
+	ldy #0
+	sty STATUS                ; clear status register
+	jsr LISTEN
+	lda #$ff
+	jsr SECOND
+	lda STATUS
+	bpl iec_pres_active       ; we have a device at this id
+	jsr UNLSN                 ; cleanup
+	lda #0                    ; indicate we have no device at this id
+	sta _iec_device
+	rts                       ;
+iec_pres_active:
+	jsr UNLSN
+    lda #1                    ; we have a device here.
+	sta _iec_device
+    rts
+
 _execute_commands:
 ; Buffer for boot execute commands: 200 bytes, zero terminated
 	.byte $00
@@ -160,5 +181,9 @@ _execute_keys:
 bootmsg:
 ; Boot message
 	.byte $0d,"uboot64.",$0D,$00
+
+_iec_device:
+; Variabele as in and output for iec_preent routine
+	.res 1
 
 	

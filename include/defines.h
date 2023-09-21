@@ -117,10 +117,12 @@ extern unsigned char menuselect;
 extern unsigned char fb_selection_made;
 extern unsigned char fb_uci_mode;
 extern unsigned char inside_mount;
+extern char iec_devices[23];
 
 // Import from cartridge back to BASIC code
 extern char execute_commands[200];
 extern char execute_keys[10];
+extern unsigned char iec_device;
 
 #define SLOTSIZE    488
 
