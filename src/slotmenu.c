@@ -301,7 +301,7 @@ void pickmenuslot()
                 do
                 {
                   gotoxy(0,24);
-                  cprintf("REU file size: (%i) %s",Slot->reusize,reusizelist[Slot->reusize]);
+                  cprintf("REU file size: (%i) %s  ",Slot->reusize,reusizelist[Slot->reusize]);
                   do
                   {
                     plusmin = cgetc();

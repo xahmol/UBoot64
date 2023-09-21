@@ -169,7 +169,7 @@ void main() {
         // Read config file
         std_read(slotfilename,1);
 
-        // Read drive configuration
+        // Read (and print feedback of) drive configuration
         if(!uii_parse_deviceinfo()) {
             printf("Getting device info fails.");
             errorexit();

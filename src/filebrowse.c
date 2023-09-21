@@ -586,7 +586,7 @@ void drawDirFrame()
   } else {
     cprintf("[%02i] %.20s",device,cwd.name);
     gotoxy(0,24);
-    cprintf("(%s) %u blocks free",drivetype[devicetype[device]],cwd.free);
+    cprintf("(%s) %u bl. free",drivetype[devicetype[device]],cwd.free);
   }
 
   if(trace || fb_uci_mode) {
@@ -869,14 +869,16 @@ void FindFirstIECDrive() {
     textcolor(DC_COLOR_TEXT);
     i = 7;
 
+    CheckActiveIECdevices();
     while(++i < MAXDEVID+1) {
         device = i;
-        if(readDir(device)) {
+        if(iec_devices[i-8] && readDir(device)) {
             getDeviceType(device);
             showDir();
             goto found_first_drive;
         }
     }
+    device = 0;
 
     found_first_drive:;
 }
@@ -945,8 +947,11 @@ void mainLoopBrowse(void)
         case '2':
         case CH_F2:
         case '+':
-          if(!fb_uci_mode) {
+          if(!fb_uci_mode && device) {
             if (++device > MAXDEVID) { device=8; }
+            while(!iec_devices[device-8]) {
+              if (++device > MAXDEVID) { device=8; }
+            }
             if (! devicetype[device])
             {
               getDeviceType(device);
@@ -957,8 +962,11 @@ void mainLoopBrowse(void)
           break;
         
         case '-':
-          if(!fb_uci_mode) {
+          if(!fb_uci_mode && device) {
             if (--device < 8) { device=MAXDEVID; }
+            while(!iec_devices[device-8]) {
+              if (--device < 8) { device=MAXDEVID; }
+            }
             if (! devicetype[device])
               {
                 getDeviceType(device);
