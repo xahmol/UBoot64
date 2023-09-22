@@ -14,6 +14,14 @@ Boot menu for C64 Ultimate enabled devices
 
 - [Installation](#installation)
 
+- [First run](#first-run)
+
+- [Add start options via the Filebrowser](#add-start-options-via-the-filebrowser)
+
+- [F1: Filebrowse menu](#f1-filebrowse-menu)
+
+- [F2: Information](#f1-filebrowse-menu)
+
 [Credits](#credits)
 
 ![Startup](https://github.com/xahmol/UBoot64/blob/main/Screenshots/UBoot64%20-%20Startup.png?raw=true)
@@ -32,11 +40,13 @@ Version 0.91 - 20230922-1818:
 ## Instructions
 
 ### Prerequisites
+([Back to contents](#contents))
 
 * UltimateII+ (U2+) cartridge installed on a real C64, or an Ultimate 64.
 - Firmware at version 3.4 or higher (to have access to the UCI DRVINFO command, link to firmware page, scroll down for U2 firmware: <https://ultimate64.com/Firmware> )
 
 ### Installation
+([Back to contents](#contents))
 
 * Download the ZIP file with the latest build
 
@@ -60,111 +70,106 @@ Version 0.91 - 20230922-1818:
 
 - Stop autostarting of UBoot64 by deselecting the cartridge via the same procedure and selecting **None** or another image as cartridge.
 
-**First run:**
+### First run
+([Back to contents](#contents))
 
-* At first run no configuration file is present yet for the menu, so only the default menu options are visible:
-![](https://github.com/xahmol/DMBoot/raw/main/pictures/dmboot%20-%20firstrunmenu.png)
+* At first run no configuration file is present yet for the menu, so it will create configuration files with an empty start menu and default seettings.
+* The configuration files will be saved in the root directory of the first USB drive found (using /usb*/ as path). The config files are called DMBCFG.CFG for the configuration data (for now only the NTP time settings) and DMBSLT.CFG (the menu slot data).
+* THe empty start menu looks like this:
+
+![](https://github.com/xahmol/UBoot64/blob/main/Screenshots/UBoot64%20-%20menu%20first%20run.png?raw=true)
 * For instructions of the menu options: see below.
 
-**Add start options via the Filebrowser**
+### Add start options via the Filebrowser
 
 * Start options can be added to menuslots 0-9 and A-Z via the Filebrowser. This can be either running an executable program, or booting a specific disk image.
 * For this, first choose **F1** for filebrowser.  You will get a screen like this:
 
-![](https://github.com/xahmol/DMBoot/raw/main/pictures/dmboot%20-%20filebrowsermenu.png)
+![](https://github.com/xahmol/UBoot64/blob/main/Screenshots/UBoot64%20-%20filebrowser.png?raw=true)
 
 * Full instructions for the filebrowser are below. Here only the quick instructions to add an option to the startmenu.
-* Select your desired drive target by switching pressing **+** or **-** to increase resp. decrease the device number until the desired device number is selected.
+* The browser starts in the so alled UCI mode. This means browsing via the Ultimate Command Interface on the native filesystem of your Ultimate device. For most purposes this is what is desired.
+* If you want to add programs from other non Ultimate attached drives you can press **F3** to go to IEC mode. Select your desired drive target by switching pressing **+** or **-** to increase resp. decrease the device number until the desired device number is selected.
 * Refresh directory by **F1** if needed (empty column)
-* Start a directory trace by pressing **D**
-  
+* Only in IEC mode: As on IEC drives full paths can not be read on drives supporting directories, a directory trace should be started by pressing **D**. This starts a trace of your movements through the directory tree, starting from the root directory of your device. You should see the directory refreshing to this root directory. You should also see the TRACE toggle switched to ON in the lower right corner of the screen.
+* Also note the other two toggles ,1 Load and Demo mode: these are toggled by pressing the **1** and **O** keys.
 
-![](https://github.com/xahmol/DMBoot/raw/main/pictures/dmboot%20-%20highlightdirtrace.png)
+  ![](https://github.com/xahmol/UBoot64/blob/main/Screenshots/UBoot64%20-%20Toggles%20UCI.png?raw=true)
 
-  This starts a trace of your movements through the directory tree, starting from the root directory of your device. You should see the directory refreshing to this root directory.
-  You should also see the TRACE toggle switched to ON in the lower right corner of the screen.
+* ,1 Load: This steers if the program will be loaded with LOAD"NAME",**8** (option off) or LOAD"NAME",*8,1* (option on)
+* Demo mode: This shuts down (or asks the user the shut down the drives which can nit automatically powered down) all drives but ID 8. Needed for most demos and some games.
+* Browse to your desired target via the **Cursor keys**: **UP/DOWN** to move within the directory, **P** for page down and **U** for a page up, **ENTER** or **CURSOR RIGHT** on a directory or disk image to enter the selected directory or image, **DEL** or **CURSOR LEFT** to change to parent directory.
+* From UCI mode, moving into a disk image (.DXX extension) mounts that image on drive A and goes to IEC node. You will see 'Inside mount' appearing in the menu.
 
-![](https://github.com/xahmol/DMBoot/raw/main/pictures/dmboot%20-%20toggledirtraceon.png).
+![](https://github.com/xahmol/UBoot64/blob/main/Screenshots/UBoot64%20-%20FB%20Inside%20Mount.png?raw=true)
 
-* Also note the other two toggles Frc 8 and FAST: these are toggled by pressing the **8** and **F** keys.
+![](https://github.com/xahmol/UBoot64/blob/main/Screenshots/UBoot64%20-%20Toggle%20inside%20mount.png?raw=true)
 
-  ![](https://github.com/xahmol/DMBoot/raw/main/pictures/dmboot%20-%20highlightforce8andfast.png)
+* To choose to have a program executed from the menuslot, select **ENTER** on the desired executable. In UCI mode, the associated disk image for drive A will be automatically selected as well to be added.
 
-* Force 8: This forces the device ID to be loaded from to 8 regardless of the device ID the target is located at. Only works for the U2+ Software IEC drive (identified as U64 in the lowest line of the directory column). This enables loading software that is not supporting other parts of the program from other device IDs as 8
-* FAST: this starts the program in FAST mode. Only use if the target is started in 80 column mode and the target supports it.
-* Browse to your desired target via the **Cursor keys**: **UP/DOWN/LEFT?RIGHT** to move within the directory, **P** for page down and **U** for a page up, **ENTER** on a directory or disk image to enter the selected directory or image, **DEL** to change to parent directory.
-* To choose to have a program executed from the menuslot, select **ENTER** or **F7** on the desired executable
-* To have the program executed in C64 mode from the menuslot, select **6** on the desired executable
+* To select a highlighted disk image (so a directory entry with an .dXX extension) as additional image to mount (in UCI mode only needed for the drive B image), press **A** or **B** to add this image to a menuslot as to be mounted on starting from that slot on the Ultimate emulated drive A resp. B. Then select the target menuslot, edit the name if desired, and enter the device ID for the image.
 
-![](https://github.com/xahmol/DMBoot/blob/main/pictures/dmboot%20-%20filebrowsermenu_run64.png?raw=true)
-
-* To choose to boot the image you are now in from the menuslot, select **F5**.
-* To select a highlighted disk image (so a directory entry with an .dXX extension), press **A** or **B** to add this image to a menuslot as to be mounted on starting from that slot on the Ultimate emulated drive A resp. B. Then select the target menuslot, edit the name if desired, and enter the device ID for the image.
-
-![](https://github.com/xahmol/DMBoot/blob/main/pictures/dmboot%20-%20filebrowsermenu_addmount.png?raw=true)
-
-* To select the highligjhted program file to be started from the disk image mounted in drive A instead of from the hyperspeed drive, select the program by pressing **M** (instead of ENTER). Then select the target menuslot, edit the name if desired.
-
-![](https://github.com/xahmol/DMBoot/blob/main/pictures/dmboot%20-%20filebrowsermenu_runmount.png?raw=true)
+* IEC mode: To select the highligjhted program file to be started from the disk image mounted in drive A instead of from the target drive filesystem, select the program by pressing **M** (instead of ENTER). Then select the target menuslot, edit the name if desired.
 
 * To add a REU file to be loaded at the start of a menu option: navigate to the desired REU file and press 'ENTER'.
 Then select the target menuslot, edit the name if desired, choose the REU size via '+' and '-' and press 'ENTER' to confirm.
 **NOTE**: The REU file needs to be in the same filepath as the drive image for disk A if that one is present (not storage space available for another path to store).
 
-* No validation if the configuration is correct or coherent is done, so setting up valid configurations is the users responsibility, Only very limited error handling on executing incorrectly configured menu slots is done. Mounts and REU file can be added or changed (by adding again and overwriting the previous one), but not deleted separately. To do so, the whole entry needs to be deleted. Adding disk images to mount, a REU file and choosing the file to start require all separate dirtrace actions in the filebrowser, so setting up a menuslot might take up to four entries to the filebrowser and navigating via dirtrace.
+* No validation if the configuration is correct or coherent is done, so setting up valid configurations is the users responsibility, Only very limited error handling on executing incorrectly configured menu slots is done. Mounts and REU file can be added or changed (by adding again and overwriting the previous one), but not deleted separately. To do so, the whole entry needs to be deleted. Adding an additional disk image to mount, a REU file and choosing the file to start require all separate actions in the filebrowser, so setting up a menuslot might take up to three entries to the filebrowser and navigating.
 
 * After selecting what should be placed in a menuslot option, you should get this screen to select the menuslot position:
 
-![](https://github.com/xahmol/DMBoot/raw/main/pictures/dmboot%20-%20choosemenuslot.png)
+![](https://github.com/xahmol/UBoot64/blob/main/Screenshots/UBoot64%20-%20Pick%20slot.png.png?raw=true)
 
 * If this slot is already (partly) filled, confirmation is asked. Choose Yes to proceed or No to Cancel.
-
-![](https://github.com/xahmol/DMBoot/blob/main/pictures/dmboot%20-%20choosemenuslot-notempty.png?raw=true)
 
 * Choose **0-9** or **A-Z** key to choose the desired slot.
 * Enter the desired name for the menuslot and press **ENTER**
 * You now return to the main menu where you should see the menu option appearing.
 * Repeat until you have selected all desired menuslot options
 
-**F1: Filebrowse menu**
+### F1: Filebrowse menu
+([Back to contents](#contents))
 
 The filebrowser based and insprired by the DraBrowse program from <https://github.com/doj/dracopy>
-![](https://github.com/xahmol/DMBoot/raw/main/pictures/dmboot%20-%20filebrowsermenu.png)
 
-Menu options are similar, but have diverged in newer DMBoot versions.
+![](https://github.com/xahmol/UBoot64/blob/main/Screenshots/UBoot64%20-%20filebrowser.png?raw=tru)
+
+Menu options are similar, but have diverged.
 
 | Key            | Function                                                     |
 | ---- | ------------------------------------------- |
-| **F1 / 1**  | Read directory in current window |
-| **+** | Increase devicenumber for the current window |
-| **-** | Decrease devicenumber for the current window |
-| **F5 / 5** | Boot from present directory / image (*added compared to DraBrowse*) |
-| **RETURN** | Enter directory or run the selected program |
+| **F1**  | Read / refresh directory |
+| **F3**  | Toggle between UCI or IEC modes |
+| **+** | Increase devicenumber (IEC mode only) |
+| **-** | Decrease devicenumber (IEC mode only) |
+| **RETURN** | Enter directory (IEC mode: or run the selected program) |
 | **DEL** | Go to parent directory |
 | **↑** | Go to root directory |
 | **T** | Go to the first item in the directory |
 | **E** | Go to the last item in the directory |
-| **S** | Show directory entries sorted. WARNING: gets very slow on large dirs |
 | **P** | Go a page down in the directory |
 | **E** | Go a page up in the directory |
 | **Cursor keys** | Navigate in the directory |
 | **D** | Toggle Dirtrace: traces the directory movements from root directory to select menuslot option |
-| **A** | Select the highlighted item as image to be mounted in drive A. Only works in Dirtrace mode, highlighted item should be an image with a .Dxx extention |
-| **B** | Select the highlighted item as image to be mounted in drive A. Only works in Dirtrace mode, highlighted item should be an image with a .Dxx extention |
+| **A** | Select the highlighted item as image to be mounted in drive A. Highlighted item should be an image with a .Dxx extention |
+| **B** | Select the highlighted item as image to be mounted in drive B. Highlighted item should be an image with a .Dxx extention |
 | **M** | Select the highlighted program to be started from the disk image mounted in drive A (instead of present device of dir) |
-| **8** | Toggle Force 8, forcing device ID 8 on program execution or boot. Works for menuslot option as well as directly from filebrowser. |
-| **F** | Toggle FAST, enabling this makes file execution or boot start in FAST mode. Works for menuslot option as well as directly from filebrowser. |
+| **1** | Toggle ,1 load |
+| **O** | Toggle demo mode |
 | **Q** | Quit to main menu |
 
-**F2: Information**
+### F2: Information
+([Back to contents](#contents))
 
-Shows information screen. Also shouws how much VDC memory is detected. Press key to return to main menu.
+Shows information screen. Press key to return to main menu.
 
-![](https://github.com/xahmol/DMBoot/raw/main/pictures/dmboot%20-%20information%20screen.png)
+![](https://github.com/xahmol/UBoot64/blob/main/Screenshots/UBoot64%20-%20Info.png?raw=true)
 
-**F3: Quit to C128 Basic**
+## F7: Quit to BASIC
+([Back to contents](#contents))
 
-Exit the bootmenu to the C128 BASIC Ready prompt. Memory will be erased on exit, SLOW mode will be selected also in 80 column mode for compatibility purposes.
+Exit the bootmenu to the BASIC Ready prompt. Memory will be erased on exit.
 
 **F4: NTP time / GEOS config**
 
