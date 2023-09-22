@@ -22,6 +22,12 @@ Boot menu for C64 Ultimate enabled devices
 
 - [F2: Information](#f1-filebrowse-menu)
 
+- [F3: Edit / re-order / delete](#f3-edit--re-order--delete)
+
+- [F5: NTP time config](#f5-ntp-time-config)
+
+- [F7: Quit to BASIC](#f2-information)
+
 [Credits](#credits)
 
 ![Startup](https://github.com/xahmol/UBoot64/blob/main/Screenshots/UBoot64%20-%20Startup.png?raw=true)
@@ -31,9 +37,9 @@ Boot menu for C64 Ultimate enabled devices
 ## Version history and download
 ([Back to contents](#contents))
 
-[Link to latest build](https://github.com/xahmol/UBoot64/raw/main/UBoot64-v091-20230922-1818.zip)
+[Link to latest build](https://github.com/xahmol/UBoot64/raw/main/UBoot64-v091-20230922-2350.zip)
 
-Version 0.91 - 20230922-1818:
+Version 0.91 - 20230922-2350:
 
 - First public alpha
 
@@ -166,90 +172,53 @@ Shows information screen. Press key to return to main menu.
 
 ![](https://github.com/xahmol/UBoot64/blob/main/Screenshots/UBoot64%20-%20Info.png?raw=true)
 
-## F7: Quit to BASIC
+### F3: Edit / re-order / delete
 ([Back to contents](#contents))
 
-Exit the bootmenu to the BASIC Ready prompt. Memory will be erased on exit.
-
-**F4: NTP time / GEOS config**
-
-Enables editing the settings for:
-* automatically obtaining the actual time from an NTP server and setting the internal clock of the Ultimate II+ to this time
-* RAM booting GEOS from a specified REU file with specified images mounted on the UII+ drives.
-
-After pressing F4, you arrive at this screen:
-
-![](https://github.com/xahmol/DMBoot/blob/main/pictures/dmboot%20-%20utilsettings.png?raw=true)
-
-The screens shows you the present settings and allows you to edit them.
-
-* **F1** Edit the settings for obtaining the time from an NTP server. This gives you this screen:
-
-![](https://github.com/xahmol/DMBoot/blob/main/pictures/dmboot%20-%20ntpsettings.png?raw=true)
-
-  * **F1** Toggles to enable or disable updating UII+ time from an NTP server at boot. Default: Enabled.
-  * **F3** Edits the time offset to UTC (Universal standard time). The offset needs to provided in seconds. Automated adjustment for daylight savings ('Summer' and 'Winter' time) is not provided, so you have to adjust your offset on the change from daylight saving time to not. Example: Central Europen Time requires an offset of 3600, Central European Summer Time of 7200. See https://www.timeanddate.com/time/zones/ for all offsets in hours (multiply by 3600 to get to seconds). Default: 0 (=UTC).
-  * **F5** Edits the NTP time server to be used. It defaults on pool.ntp.org, but you can specify your own if you want.
-  * **F7** Back to main menu
-
-* **F3** Edit the GEOS RAM boot configuration options. This gives you this screen:
-
-![](https://github.com/xahmol/DMBoot/blob/main/pictures/dmboot%20-%20geossettings.png?raw=true)
-
-  * **F1** Enables editing of the path to and the filename of the REU file to use on your UII+ device. Gives this screen:
-
-![](https://github.com/xahmol/DMBoot/blob/main/pictures/dmboot%20-%20geosreupath.png?raw=true)
-
-  * **F3** Enables editing the REU file size to match the image you have chosen. Choose **+** to increase size, **-** to decrease.
-
-  ![](https://github.com/xahmol/DMBoot/blob/main/pictures/dmboot%20-%20geosreusize.png?raw=true)
-
-  * **F5** Edits the device IDs, paths and the filenames of the images you want to mount.
-
-  ![](https://github.com/xahmol/DMBoot/blob/main/pictures/dmboot%20-%20geosimages.png?raw=true)
-
-  * **F7** Back to main menu
-
-* **F7** Quit configuration tool. Only at this time new settings will be saved.
-
-**F5: C64 mode**
-
-Go to C64 mode (no confirmation will be asked)
-
-**F6: GEOS RAM boot**
-
-Boot GEOS from RAM with the specified settings. Those settings need to be configured first (via the F4 option in the main menu) for this to work.
-
-Demonstration of booting GEOS via DMBoot (click picture to see video on Youtube):
-
-[![](https://img.youtube.com/vi/u9hQ0eEtpeI/0.jpg)](https://www.youtube.com/watch?v=u9hQ0eEtpeI)
-
-**F7: Edit / re-order / delete**
-
 Enables to rename menuslots, re-order the slots or delete a slot. Selecting provides this menu:
-![](https://github.com/xahmol/DMBoot/raw/main/pictures/dmboot%20-%20editreorderdelete.png)
+
+![](https://github.com/xahmol/UBoot64/blob/main/Screenshots/UBoot64%20-%20Edit%20menu.png?raw=true)
 
 * **F1** enables renaming a menuslot. Choose slot to be renamed by pressing **0-9** or **A-Z**. Enter new name. Enter to confirm.
 
-![](https://github.com/xahmol/DMBoot/raw/main/pictures/dmboot%20-%20rename.png)
+![](https://github.com/xahmol/UBoot64/blob/main/Screenshots/UBoot64%20-%20rename.png?raw=true)
 
-* **F2** enables to add a user defined command. This gives this screen:
+* **F2** enables to add a user defined command. This enables to add a user defined command to be executed before the program in the slot is started. Can be any valid BASIC command.
 
-![](https://github.com/xahmol/DMBoot/blob/main/pictures/dmboot%20-%20commandmountselect.png?raw=true)
+This gives this screen:
 
-**F1** will then enable to add an image to be mounted before the slot executable is started. Enter device ID (8 or 9 for the emulated drives, or 0 to cancel), path on the USB stick to the image and the image name.
-
-**F2** will enable to add a user defined command to be executed before the program in the slot is started. Can be any valid BASIC command.
+![](https://github.com/xahmol/UBoot64/blob/main/Screenshots/UBoot64%20-%20command.png?raw=true)
 
 * **F3** enables re-ordering menu slots. Choose slot to be re-ordered by pressing **0-9** or **A-Z**. Selected menu slot is highlighted white. Move option by pressing **UP** or **DOWN**. Confirm by **ENTER**. Cancel with **F7**.
 
-![](https://github.com/xahmol/DMBoot/raw/main/pictures/dmboot%20-%20reorder.png)
+![](https://github.com/xahmol/UBoot64/blob/main/Screenshots/UBoot64%20-%20reorder.png?raw=true)
 
 * **F5** enables deleting a menu slot. Choose slot to be re-ordered by pressing **0-9** or **A_Z**. Confirm by pressing **Y** for yes, or **N** for no.
 
-![](https://github.com/xahmol/DMBoot/raw/main/pictures/dmboot%20-%20delete.png)
+![](https://github.com/xahmol/UBoot64/blob/main/Screenshots/UBoot64%20-%20Delete.png?raw=true)
 
 * **F7** takes you back to main menu. Changes made are saved only now.
+
+### F5: NTP time config
+([Back to contents](#contents))
+
+Enables editing the settings for automatically obtaining the actual time from an NTP server and setting the internal clock of the Ultimate II+ to this time.
+
+After pressing F5, you arrive at this screen:
+
+![](https://github.com/xahmol/UBoot64/blob/main/Screenshots/UBoot64%20-%20NTP%20menu.png?raw=true)
+
+The screens shows you the present settings and allows you to edit them.
+
+* **F1** Toggles to enable or disable updating UII+ time from an NTP server at boot. Default: Enabled.
+* **F3** Edits the time offset to UTC (Universal standard time). The offset needs to provided in seconds. Automated adjustment for daylight savings ('Summer' and 'Winter' time) is not provided, so you have to adjust your offset on the change from daylight saving time to not. Example: Central Europen Time requires an offset of 3600, Central European Summer Time of 7200. See https://www.timeanddate.com/time/zones/ for all offsets in hours (multiply by 3600 to get to seconds). Default: 0 (=UTC).
+* **F5** Edits the NTP time server to be used. It defaults on pool.ntp.org, but you can specify your own if you want.
+* **F7** Back to main menu
+
+### F7: Quit to BASIC
+([Back to contents](#contents))
+
+Exit the bootmenu to the BASIC Ready prompt. Memory will be erased on exit.
 
 ## Credits
 
