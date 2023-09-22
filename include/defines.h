@@ -26,6 +26,7 @@
 // Execute flag values
 #define EXEC_MOUNT              0x01
 #define EXEC_COMMA1             0x02
+#define EXEC_DEMO               0x10
 
 // Config version
 #define CFGVERSION              0x01
@@ -70,6 +71,7 @@ extern BYTE pathrunboot;
 extern BYTE depth;
 extern BYTE trace;
 extern BYTE comma1;
+extern BYTE demomode;
 extern BYTE commandflag;
 extern BYTE mountflag;
 extern BYTE reuflag;

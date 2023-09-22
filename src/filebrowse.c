@@ -724,7 +724,8 @@ void updateMenu(void)
     cputsxy(MENUX+1,++menuy," AB Add mount");
     cputsxy(MENUX+1,++menuy,"  M Run mount");
   } else { menuy += 2; }
-  cputsxy(MENUX+1,++menuy,"  1 Toggle ,1");
+  cputsxy(MENUX+1,++menuy,"  1 ,1 Load");
+  cputsxy(MENUX+1,++menuy,"  O Demo mode");
   cputsxy(MENUX+1,++menuy," F7 Quit");
 
   menuy++;
@@ -755,6 +756,14 @@ void updateMenu(void)
   {
     cputsxy(MENUX+1,++menuy,",1 Load OFF");
   }
+  if (demomode == 1)
+  {
+    cputsxy(MENUX+1,++menuy,"Demo    ON ");
+  }
+  else
+  {
+    cputsxy(MENUX+1,++menuy,"Demo    OFF");
+  }
 }
 
 int changeDir(const BYTE device, char *dirname)
@@ -762,7 +771,7 @@ int changeDir(const BYTE device, char *dirname)
     int ret;
     register BYTE l = strlen(dirname);
     //unsigned char x;
-  
+
     if (dirname) {
         CheckMounttype(dirname);
 
@@ -891,6 +900,7 @@ void mainLoopBrowse(void)
   int DIRH = 19;
   int xpos,ypos,yoff;
   unsigned char count;
+  char leftarrow[2] = { CH_LARROW,0 };
   
   trace = 0;
   depth = 0;
@@ -901,6 +911,8 @@ void mainLoopBrowse(void)
   inside_mount = 0;
   fb_uci_mode = 1;
   fb_selection_made = 2;
+  comma1 = 1;
+  demomode = 0;
 
   memset(&cwd,0,sizeof(cwd));
   memset(disk_id_buf, 0, DISK_ID_LEN);
@@ -928,6 +940,11 @@ void mainLoopBrowse(void)
             updateMenu();
             break;
 
+        case 'o':
+            demomode = !demomode;
+            updateMenu();
+            break;
+
         case CH_F1:
           readDir(device);
           showDir();
@@ -938,6 +955,16 @@ void mainLoopBrowse(void)
           updateMenu();
           if(!fb_uci_mode) {
             FindFirstIECDrive();
+            if(!device) {
+              clearArea(0,3,DIRW,22);
+              gotoxy(0,3);
+              cputs("No active IEC drives.\n\r");
+              cputs("Press key.");
+              cgetc();
+              fb_uci_mode = 1;
+              readDir(device);
+              showDir();
+            }
           } else {
             readDir(device);
             showDir();
@@ -995,8 +1022,8 @@ void mainLoopBrowse(void)
             {
               trace = 0;
               depth = 0;
-              showDir();
             }
+            showDir();
             updateMenu();
           }
           break;
@@ -1089,12 +1116,12 @@ void mainLoopBrowse(void)
             {
               if (trace == 0 && !fb_uci_mode)
               {
-                execute(current->dirent.name,device, comma1*EXEC_COMMA1, "");
+                execute(current->dirent.name,device, comma1*EXEC_COMMA1 + demomode*EXEC_DEMO, "");
               }
               else
               {
                 StringSafeCopy(pathfile, current->dirent.name,19);
-                pathrunboot = comma1*EXEC_COMMA1;
+                pathrunboot = comma1*EXEC_COMMA1 + demomode*EXEC_DEMO;
                 fb_selection_made = 1;
                 goto done;
               }             
@@ -1133,7 +1160,7 @@ void mainLoopBrowse(void)
             if(fb_uci_mode) {
               changeDir(0, "..");
             } else {
-              changeDir(device, devicetype[device] == U64?"..":"\xff");
+              changeDir(device, (devicetype[device] == U64)?"..":leftarrow);
             }
           }
           break;
@@ -1239,7 +1266,7 @@ void mainLoopBrowse(void)
           if(mountflag==1 && imageaid) {
             runmountflag = 1;
             StringSafeCopy(pathfile, current->dirent.name,19);
-            pathrunboot = comma1*EXEC_COMMA1;
+            pathrunboot = comma1*EXEC_COMMA1 + demomode*EXEC_DEMO;
             fb_selection_made=1;
             goto done;
           }

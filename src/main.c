@@ -30,6 +30,7 @@
 // - UUC based on Final Cartridge III by Bart van Leeuwen / bvl1999
 //   https://github.com/bvl1999/final_cartridge/blob/master/core/init.s
 //   Used for inspiration for building C64 cartridge image with CC65
+//   Also help with ideas, feednack, error solving, testing and code snippets
 // - ntp2ultimate by MaxPlap
 //   https://github.com/MaxPlap/ntp2ultimate
 //   Time via NTP code
@@ -90,6 +91,7 @@ BYTE pathrunboot;
 BYTE depth = 0;
 BYTE trace = 0;
 BYTE comma1 = 1;
+BYTE demomode = 0;
 BYTE commandflag = 0;
 BYTE reuflag = 0;
 BYTE addmountflag = 0;

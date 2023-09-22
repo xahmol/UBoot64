@@ -396,6 +396,8 @@ void ToggleDrivePower(unsigned char ab, unsigned char on) {
                     uii_enable_drive_b();
                 }
                 cputs("powered on.\n\r");
+                cputs("Waiting for drive to be ready.");
+                delay(2);
             } else {
                 cputs("already on.\n\r");
             }
@@ -432,15 +434,11 @@ void runbootfrommenu(int select)
         cprintf("%s on ID %d.\n\r",Slot->image_a_file,Slot->image_a_id);
         ToggleDrivePower(0,1);
         mountimage(Slot->image_a_id,Slot->image_a_path,Slot->image_a_file);
-    } else {
-        ToggleDrivePower(0,0);
     }
     if(Slot->command & COMMAND_IMGB) {
         cprintf("%s on ID %d.\n\r",Slot->image_b_file,Slot->image_b_id);
         ToggleDrivePower(1,1);
         mountimage(Slot->image_b_id,Slot->image_b_path,Slot->image_b_file);
-    } else {
-        ToggleDrivePower(1,0);
     }
     if(Slot->command & COMMAND_REU) {
         cprintf("REU file %s",Slot->reu_image);

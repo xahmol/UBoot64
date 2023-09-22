@@ -52,10 +52,12 @@
 #include <stdlib.h>
 #include <errno.h>
 #include <ctype.h>
+#include <time.h>
 #include <device.h>
 #include <c64.h>
 #include "defines.h"
 #include "core.h"
+#include "u-time.h"
 #include "ultimate_common_lib.h"
 #include "ultimate_dos_lib.h"
 #include "ultimate_time_lib.h"
@@ -82,6 +84,14 @@ void errorexit()
   printf("\n\rPress key to exit to BASIC.");
   cgetc();
   bankout();
+}
+
+void delay(unsigned char seconds) {
+// Wait for the specified number of seconds
+
+  cia_seconds = 0;
+  cia_tensofsec = 0;
+  while(cia_seconds < seconds) { ; }
 }
 
 void StringSafeCopy(char* dest, char* src, unsigned char maxlen) {
@@ -227,7 +237,8 @@ unsigned char CheckIfUltimateOnID(unsigned char id) {
 
 unsigned char CheckActiveIECdevices() {
 // Check all non drivve A and B IEC devices if they are active or not
-// Fill iec_devices array and return 1 if any is active, 0 for none
+// Fill iec_devices array: 0 = not active, 1 = non Ult, 2 = Ult
+// return 1 if any is active, 0 for none
 
   unsigned char anyactive = 0;
   unsigned char x,check;
@@ -245,7 +256,7 @@ unsigned char CheckActiveIECdevices() {
     //printf("C%d ",check);
     if(check) {
       if(check > 1) {
-        iec_devices[x] = 1;
+        iec_devices[x] = check;
         anyactive = (check==3)?1:0; // Set anyactive if not UCI controllable and powered
       }
     } else {
@@ -253,7 +264,7 @@ unsigned char CheckActiveIECdevices() {
       //printf("I%d ",iec_device);
       if(iec_device) {
         iec_devices[x] = 1;
-        anyactive = 1;
+        anyactive = (x==0)?0:1;         // Set on one if not ID 8
       }
     }
     //printf("%2d:%d ",iec_device,iec_devices[x]);
@@ -329,6 +340,35 @@ const char* getDeviceType(const BYTE device) {
   return "!n";
 }
 
+void DoDemoMode() {
+// Shut down all drives but the drive on 8
+
+  unsigned char x;
+
+  // Switch of Ultimate drives A and B if not on ID 8
+  if(uii_devinfo[0].exist && uii_devinfo[0].power && uii_devinfo[0].id != 8) {
+    uii_disable_drive_a();
+    cprintf("Power off drive A: %s\n\r",(uii_success())?"Yes":"No");
+  }
+  if(uii_devinfo[1].exist && uii_devinfo[1].power && uii_devinfo[1].id != 8) {
+    uii_disable_drive_b();
+    cprintf("Power off drive B: %s\n\r",(uii_success())?"Yes":"No");
+  }
+
+  // Ask user to disable other drives if needed
+  while(CheckActiveIECdevices()) {
+    cputs("Switch off ID ");
+    for(x=1;x<23;x++) {
+        if(iec_devices[x] && iec_devices[x]<4) {
+            printf("%02d ",(x==22)?4:x+8);
+        }
+    }
+    cputs(" and press key.\n\r");
+    cgetc();
+  }
+  printf("Success in powering down all drives but ID 8.\n\r");
+}
+
 void execute(char * prg, BYTE device, BYTE boot, char * command)
 {
   // Routine to execute or boot chosen file or dir
@@ -344,6 +384,11 @@ void execute(char * prg, BYTE device, BYTE boot, char * command)
   unsigned int pos=2;
   unsigned char numberenter = 2;
   unsigned char x;
+
+  // Check if demo mode is active
+  if(boot&EXEC_DEMO) {
+    DoDemoMode();
+  }
   
   // First output two enters
   execute_commands[0] = 0x0d;

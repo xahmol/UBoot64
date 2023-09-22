@@ -31,7 +31,7 @@ LDFLAGSMAIN = -C fc3.cfg -t $(CC65_TARGET) -m $(MAIN).map
 
 .SUFFIXES:
 .PHONY: all clean deploy
-all: $(MAIN)
+all: $(MAIN) $(ZIP)
 
 ifneq ($(MAKECMDGOALS),clean)
 -include $(SOURCESMAIN:.c=.d) $(SOURCESUPD:.c=.d) $(SOURCESTIME:.c=.d) $(SOURCESGEOS:.c=.d) $(SOURCESCFG:.c=.d)
@@ -43,8 +43,8 @@ endif
 $(MAIN): $(LIBMAIN) $(SOURCESMAIN:.c=.o)
 	$(CC) $(LDFLAGSMAIN) -o $@ $^
 
-#$(ZIP): $(DEPLOYS) $(README)
-#	zip $@ $^
+$(ZIP): $(DEPLOYS) $(README)
+	zip $@ $^
 
 clean:
 	$(RM) $(SOURCESMAIN:.c=.o) $(SOURCESMAIN:.c=.d) $(MAIN) $(MAIN).map

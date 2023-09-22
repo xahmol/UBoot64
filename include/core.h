@@ -6,6 +6,7 @@
 void iec_present();
 unsigned char CheckActiveIECdevices();
 void errorexit();
+void delay(unsigned char seconds);
 void StringSafeCopy(char* dest, char* src, unsigned char maxlen);
 void CheckStatus(char* message);
 void mid(const char *src, size_t start, size_t length, char *dst, size_t dstlen);
