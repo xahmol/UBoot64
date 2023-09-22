@@ -723,7 +723,7 @@ void updateMenu(void)
   if(fb_uci_mode) {
     cputsxy(MENUX+1,++menuy," AB Add mount");
     cputsxy(MENUX+1,++menuy,"  M Run mount");
-  } else { menuy += 2; }
+  }
   cputsxy(MENUX+1,++menuy,"  1 ,1 Load");
   cputsxy(MENUX+1,++menuy,"  O Demo mode");
   cputsxy(MENUX+1,++menuy," F7 Quit");

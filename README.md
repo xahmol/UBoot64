@@ -42,27 +42,23 @@ Version 0.91 - 20230922-1818:
 
 * In the ZIP file you will find these instructions and a .crt file, the latter is the cartridge image containing the UBoot64 software. Unzip contents to a temporary location.
 
-* Transfer this .crt file to the /Flash/Carts directory on your Ultimate device.
+* Transfer this .crt file to the /Flash/Carts directory on your Ultimate device. Either transfer to this directory on your Ultimate device via FTP, or place it somewhere on the USB storage Ultimate device, browse to it in the UI filebrowser, press C= + C to copy, navigate to the /Flash/Carts dir and paste by C= + V/.
 
-**Upgrade instructions from version 1.99 to 2.99:**
+![Ultimate UI](https://github.com/xahmol/UBoot64/blob/main/Screenshots/UBooy64%20-%20Ultimate%20UI.png?raw=true)
 
-* If you want to be able to revert to the old version (and also in all other cases as backing up is always a good idea), please backup your present config file as it will be altered/overwritten to the updated format unreadable by the old version.
-* The ZIP contains the utility dmb-confupd-2-3.prg to update your present config file to the new format.
-* Unzip the ZIP file and transfer first dmb-confupd-2-3.prg to the 11 dir of your UII+ USB drive.
-* On your C128, move to the 11 dir and run dmb-confupd-2-3.prg to upgrade the config file.
-  Of course you can also opt to start clean: in that case just delete the dmbootconf.seq file and a new empty one will be created on start of the new DMBoot version.
-  Starting the new DMBoot version with the old config file however gives unexpected results as I did not program a check on the config file version.
-* Only then transfer the new autostart.128.prg to the 11 dir of your USB stick.
-* You can now reboot as normal. The upgraded config file should be read correctly now.
+![Ultimate Flash dir](https://github.com/xahmol/UBoot64/blob/main/Screenshots/UBoot64%20-%20Flashdir.png?raw=true)
 
-**Upgrade instructions from version 2.99 to 3.9x:**
+![Ultimate Carts dir](https://github.com/xahmol/UBoot64/blob/main/Screenshots/UBoot64%20-%20carts%20dir.png?raw=true)
 
-* FIRST BACKUP YOUR PRESENT CONFIGURATION! This is still an alpha releases, so bugs in for example the configuration file upgrade utility might be present
-* Upgrade your configuration file by running the DMB-CONFUP-3-4 program
-* Add disk image mounts: Go to the filebrowser via F1, go to the correct device, press 'D' for dirtrace, navigate to the desired disk image and press 'A' to mount on drive A or 'B' to mount on drive B. Then select the target menuslot, edit the name if desired, and enter the device ID for the image.
-* Add REU files: Go to the filebrowser via F1, go to the correct device, press 'D' for dirtrace, navigate to the desired REU file and press 'ENTER'. Then select the target menuslot, edit the name if desired, choose the REU size via '+' and '-' and press 'ENTER' to confirm.
-* NOTE: The REU file needs to be in the same filepath as the drive image for disk A if that one is present (not storage space available for another path to store).
-* Select the file to start from a mounted disk image on drive A (instead of running via the hyperspeed file system): Go to the filebrowser via F1, go to the correct device, press 'D' for dirtrace, navigate to the desired file to start and press 'M'. Then select the target menuslot, edit the name if desired.
+- Select this .crt file as cartridge to start automatically on start of your Ultimate device by, in the Ultimate UI, first press **F2**, navigate with cursor down to **C64 and Cartridge Settings**. press **RETURN**, press **RETURN** again to edit the **Cartridge** option, and select **uboot64.crt** from the drop down box. Press **STOP** to leave the configuration menu and press **RETURN** to confirm storing the settings to flash.
+
+![Ultimate UI cart settings](https://github.com/xahmol/UBoot64/blob/main/Screenshots/UBoot64%20-%20UI%20cart%20settings.png?raw=true)
+
+![Ultimate UI select cart](https://github.com/xahmol/UBoot64/blob/main/Screenshots/UBoot64%20-%20UI%20set%20cart.png?raw=true)
+
+- Do a power cycke of your device. The UBoot64 software should now automatically start on starting your Ultimate device.
+
+- Stop autostarting of UBoot64 by deselecting the cartridge via the same procedure and selecting **None** or another image as cartridge.
 
 **First run:**
 
