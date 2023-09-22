@@ -8,7 +8,7 @@ Boot menu for C64 Ultimate enabled devices
 
 [Version history and download](#version-history-and-download)
 
-[Contents](#contents)
+[Instructions](#instructions)
 
 - [Prerequisites](#prerequisites)
 
@@ -33,30 +33,16 @@ Version 0.91 - 20230922-1818:
 
 ### Prerequisites
 
-* UltimateII+ (U2+) cartridge installed, with firmware at version 3.4 or higher
-  (link to firmware page, scroll down for U2 firmware: <https://ultimate64.com/Firmware> )
+* UltimateII+ (U2+) cartridge installed on a real C64, or an Ultimate 64.
+- Firmware at version 3.4 or higher (to have access to the UCI DRVINFO command, link to firmware page, scroll down for U2 firmware: <https://ultimate64.com/Firmware> )
 
 ### Installation
 
-* Create a directory called '11' on your usb stick, and put the contents of the DMBoot ZIP there. It doesn't really matter if the usb stick is usb0 or usb1 or such, but what is important is the 'default path' setting in the Software IEC menu of the U2+ cartridge is pointing to the proper path for your usb stick. While it doesn't matter if the usb stick is usb0/1 etc, the names of the directory and file are important.
+* Download the ZIP file with the latest build
 
-* Unzipping should place these files in the 11 directory:
+* In the ZIP file you will find these instructions and a .crt file, the latter is the cartridge image containing the UBoot64 software. Unzip contents to a temporary location.
 
-  * autostart.128.prg: DMBoot main program that will be auto started on boot (and therefore has to have this name, otherwise the Device Manager ROM will not be able to recognise that this needs to be started)
-
-  * dmb-fb.prg: Memory overlay for the file browser (cannot be executed as stand alone program)
-
-  * dmb-geos.prg: Memory overlay for the GEOS RAM Boot code (cannot be executed as stand alone program)
-
-  * dmb-lowc.prg: Memory overlay for shared functions loaded in the $1300 area (cannot be executed as stand alone program)
-
-  * dmb-menu.prg: Memory overlay for the DMBoot main menu functions (cannot be executed as stand alone program)
-
-  * dmb-util.prg: Memory overlay for the NTP time set and GEOS configuration settings and UI.
-
-  * dmb-confupd-3-4.prg: Utility to upgrade the configuration file of the DM Boot main program from the 1.99 version to the 2.99 version. Only needed if coming from a previous version.
-
-  * readme.txt: This readme file.
+* Transfer this .crt file to the /Flash/Carts directory on your Ultimate device.
 
 **Upgrade instructions from version 1.99 to 2.99:**
 
