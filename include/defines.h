@@ -126,6 +126,8 @@ extern char execute_commands[200];
 extern char execute_keys[10];
 extern unsigned char iec_device;
 
+#pragma charmap (0xff, 0x5f);
+
 #define SLOTSIZE    488
 
 #define CH_LARROW   0x5f

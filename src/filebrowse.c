@@ -900,7 +900,6 @@ void mainLoopBrowse(void)
   int DIRH = 19;
   int xpos,ypos,yoff;
   unsigned char count;
-  char leftarrow[2] = { CH_LARROW,0 };
   
   trace = 0;
   depth = 0;
@@ -1160,7 +1159,7 @@ void mainLoopBrowse(void)
             if(fb_uci_mode) {
               changeDir(0, "..");
             } else {
-              changeDir(device, (devicetype[device] == U64)?"..":leftarrow);
+              changeDir(device, (devicetype[device] == U64)?"..":"\xff");
             }
           }
           break;
