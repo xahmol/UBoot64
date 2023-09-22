@@ -8,7 +8,10 @@ Boot menu for C64 Ultimate enabled devices
 ## Version history and download
 ([Back to contents](#contents))
 
+[Link to latest build](https://github.com/xahmol/UBoot64/raw/main/UBoot64-v091-20230922-1726.zip)
 
+Version 0.91 - 20230922-1726:
+- First public alpha
 
 ## Credits
 
